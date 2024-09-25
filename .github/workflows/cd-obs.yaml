@@ -13,8 +13,8 @@ on:
 
 env:
   OBS_USER: ${{ secrets.OBS_USER }}
-  OBS_PASS: ${{ secrets.OBS_PASS }}
-  OBS_PROJECT: ${{ vars.OBS_PROJECT}}
+  OBS_PASS: ${{ secrets.OBS_PASSWORD }}
+  OBS_PROJECT: ${{ vars.OBS_PROJECT }}
 
 jobs:
   obs-commit:
