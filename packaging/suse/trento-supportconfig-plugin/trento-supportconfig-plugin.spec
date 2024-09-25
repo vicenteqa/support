@@ -30,7 +30,10 @@ BuildArch: noarch
 Provides:  %{name} = %{version}-%{release}
 Requires:  supportconfig-plugin-resource
 Requires:  supportconfig-plugin-tag
-Requires:  python3-yq
+Requires:  yq
+Requires:  jq
+Requires:  helm
+Requires:  kubernetes-client
 
 %description
 Supportconfig plugin for Trento.
