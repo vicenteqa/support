@@ -47,7 +47,7 @@ The script allows the user to collect all relevant installation details for a su
 
 %install
 install -D -m 0755 trento-support.sh "%{buildroot}%{_bindir}/trento-support"
-install -d "%{buildroot}/usr/lib/supportconfig/plugin"
+install -d "%{buildroot}/usr/lib/supportconfig/plugins"
 install -m 0544 packaging/suse/trento-supportconfig-plugin/trento "%{buildroot}/usr/lib/supportconfig/plugins"
 
 %files
