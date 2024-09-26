@@ -56,3 +56,7 @@ install -m 0544 packaging/suse/trento-supportconfig-plugin/trento "%{buildroot}/
 /usr/lib/supportconfig
 /usr/lib/supportconfig/plugins
 /usr/lib/supportconfig/plugins/trento
+
+%license LICENSE
+
+%changelog
