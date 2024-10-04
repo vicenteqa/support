@@ -1,0 +1,146 @@
+#!/bin/bash
+#############################################################
+# Name:        Supportconfig Plugin for SUSE Trento
+# Description: Gathers important troubleshooting information
+#              about a SUSE Trento SAP console
+# License:     Apache-2.0
+#############################################################
+
+SVER='1.0.0'
+RCFILE="/usr/lib/supportconfig/resources/supportconfig.rc"
+TITLE="Trento"
+OF=plugin-trento.txt
+
+
+[ -s $RCFILE ] && . $RCFILE || { echo "ERROR: Initializing resource file: $RCFILE"; exit 1; }
+
+validate_rpm_if_installed() {
+	THISRPM=$1
+	echo "#==[ Validating RPM ]=================================#"
+	if rpm -q $THISRPM >/dev/null 2>&1; then
+		echo "# rpm -V $THISRPM"
+		if rpm -V $THISRPM; then
+			echo "Status: Passed"
+		else
+			echo "Status: WARNING"
+		fi
+	else
+		echo "package $THISRPM is not installed"
+		echo "Status: Skipped"
+	fi
+	echo
+}
+
+
+## Docs  ##
+log_entry $OF section "Referencee Documentation"
+echo -e "Current Documentation:
+https://documentation.suse.com/sles-sap/trento/html/SLES-SAP-trento/
+"
+#############################################################
+log_entry $OF section "Supportconfig Plugin for $TITLE, v${SVER}"
+
+RPMLIST="
+trento-web
+trento-wanda
+rabbitmq-server
+postgresql-server
+prometheus
+"
+
+# Detect Trento deployment type
+
+### Kubernetes ###
+# Just use trento-support.sh ?
+
+
+if rpm_verify $OF trento-server-installer; then
+    trento-support --output stdout --collect all
+fi
+
+### Docker ###
+
+
+### Systemd ###
+if rpm_verify $OF trento-web; then
+    log_cmd $OF "rpm -qa | egrep 'trento-web|trento-wanda|postgresql-server|rabbitmq-server|prometheus'"
+    for THISRPM in $RPMLIST
+        do
+            validate_rpm_if_installed $THISRPM
+        done
+
+    for SERVICE in trento-web trento-wanda postgresql rabbitmq-server  prometheus
+        do
+    		log_cmd $OF "systemctl status ${SERVICE}.service --lines=0"
+        done
+            conf_files $OF /etc/trento/trento-web /etc/trento/trento-wanda /var/lib/pgsql/data/postgresql.conf /var/lib/pgsql/data/pg_hba.conf /etc/rabbitmq/rabbitmq.conf /etc/prometheus/prometheus.yml
+
+            log_entry $OF section "Trento Web/Wanda health status"
+            log_cmd $OF curl -sS http://localhost:4000/api/readyz
+            echo
+            log_cmd $OF curl -sS http://localhost:4000/api/healthz
+            echo
+            log_cmd $OF curl -sS http://localhost:4001/api/readyz
+            echo
+            log_cmd $OF curl -sS http://localhost:4001/api/healthz
+            echo
+            echo
+
+            log_entry $OF section "Postgresql Section"
+            
+            log_entry $OF section "Postgresql permissions"
+            echo "#==[ Trento databases ]=============================#"
+            su - postgres -c 'psql -tlq | cut -d \| -f 1 | grep -wE "trento|trento_event_store|wanda"'
+            echo
+
+            echo "#==[ trento database permissions ]==================#"
+            su - postgres -c "psql -d trento -c \"
+                SELECT grantor, grantee, table_schema, table_name, privilege_type 
+                FROM information_schema.table_privileges 
+                WHERE grantee = 'trento_user' OR grantee = 'wanda_user'\""
+            
+            echo "#==[ trento_event_store database permissions ]======#"
+            su - postgres -c "psql -d trento_event_store -c \"
+                SELECT grantor, grantee, table_schema, table_name, privilege_type 
+                FROM information_schema.table_privileges 
+                WHERE grantee = 'trento_user' OR grantee = 'wanda_user'\""
+            
+            echo "#==[ wanda database permissions ]===================#"
+            su - postgres -c "psql -d wanda -c \"
+            SELECT grantor, grantee, table_schema, table_name, privilege_type 
+            FROM information_schema.table_privileges 
+            WHERE grantee = 'trento_user' OR grantee = 'wanda_user'\""
+
+            log_entry $OF section "Rabbitmq Configuration"
+            log_cmd $OF "rabbitmqctl list_permissions -p vhost 2>/dev/null"
+            echo "Permissions should be: .*      .*      .*"
+fi
+
+
+
+
+### TODO ###
+# Detect and use usernames/database names/vhost name from config
+#check rabbitmqctl users/vhost/permissions
+#check firewall
+#check postgres database/users/permissions
+#run standalone if not executed by supportconfig
+
+
+_sanitize_file $OF
+#TODO sanitize these values
+# postgresql-password
+# postgresql-postgres-password
+# .secretKeyRef
+# adminUser
+# admin-user
+# admin-password
+# SMTP_PASSWORD
+# ADMIN_USER
+# ADMIN_PASSWORD
+# SECRET_KEY_BASE
+# ACCESS_TOKEN_ENC_SECRET
+# REFRESH_TOKEN_ENC_SECRET
+
+
+echolog Done

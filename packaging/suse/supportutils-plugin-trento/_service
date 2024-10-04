@@ -2,12 +2,12 @@
     <service name="tar_scm" mode="manual">
         <param name="url">https://github.com/trento-project/support.git</param>
         <param name="scm">git</param>
-        <param name="filename">trento-supportconfig-plugin</param>
+        <param name="filename">supportutils-plugin-trento</param>
         <param name="revision">%%REVISION%%</param>
         <param name="versionformat">%%VERSION%%</param>
     </service>
     <service name="set_version" mode="manual">
-        <param name="file">trento-supportconfig-plugin.spec</param>
+        <param name="file">supportutils-plugin-trento.spec</param>
     </service>
     <service name="recompress" mode="manual">
         <param name="file">*.tar</param>

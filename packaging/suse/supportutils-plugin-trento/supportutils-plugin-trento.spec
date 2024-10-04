@@ -1,5 +1,5 @@
 #
-# spec file for package trento-supportconfig-plugin
+# spec file for package supportutils-plugin-trento
 #
 # Copyright (c) 2024 SUSE LLC
 #
@@ -16,7 +16,7 @@
 #
 
 
-Name:      trento-supportconfig-plugin
+Name:      supportutils-plugin-trento
 # Version will be processed via set_version source service
 Version:   0
 Release:   0
@@ -47,7 +47,7 @@ The script allows the user to collect all relevant installation details for a su
 %install
 install -D -m 0755 trento-support.sh "%{buildroot}%{_bindir}/trento-support"
 install -d "%{buildroot}/usr/lib/supportconfig/plugins"
-install -m 0544 packaging/suse/trento-supportconfig-plugin/trento "%{buildroot}/usr/lib/supportconfig/plugins"
+install -m 0544 packaging/suse/supportutils-plugin-trento/trento "%{buildroot}/usr/lib/supportconfig/plugins"
 
 %files
 %defattr(-,root,root)
