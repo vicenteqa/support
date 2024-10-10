@@ -199,6 +199,11 @@ if rpm -q --quiet trento-web; then
 
         echo "#==[ Postgresql permissions ]=======================#"
         echo "#==[ Trento databases ]=============================#"
+        DB_TRENTO=""
+        DB_TRENTO_EVENTS=""
+        DB_WANDA=""
+        DB_TRENTO_USER=""
+        DB_WANDA_USER=""
         #TODO use detected database names
         su - postgres -c 'psql -tlq | cut -d \| -f 1 | grep -wE "trento|trento_event_store|wanda"'
         echo
@@ -233,7 +238,23 @@ fi
 
 
 
-# Trento Agent
+### Trento Agent ###
+#TODO 
+# collect /etc/machine-id
+# /etc/trento/agent.yaml
+
+if rpm -q --quiet trento-agent; then
+    log_cmd $OF "rpm -qa | egrep 'trento-agent|golang-github-prometheus-node_exporter'"
+    for RPM in trento-agent golang-github-prometheus-node_exporter
+    do
+        rpm_verify $OF $RPM
+    done
+    for SERVICE in trento-agent.service prometheus-node_exporter.service
+    do
+		log_cmd $OF "systemctl status ${SERVICE}.service"
+    done
+fi
+
 
 _sanitize_file_trento $OF
 echolog Done
