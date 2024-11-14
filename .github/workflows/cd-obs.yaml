@@ -25,7 +25,7 @@ jobs:
       env:
         DEST_FOLDER: "/tmp/osc_project"
         FOLDER: packaging/suse
-        PACKAGE: "trento-supportconfig-plugin"
+        PACKAGE: supportutils-plugin-trento
       options: -u 0:0
     steps:
       - name: Checkout
