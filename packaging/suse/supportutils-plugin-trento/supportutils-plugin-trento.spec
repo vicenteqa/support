@@ -28,11 +28,13 @@ Source:    %{name}-%{version}.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-build
 BuildArch: noarch
 Provides:  %{name} = %{version}-%{release}
+Provides:  trento-supportconfig-plugin = %{version}-%{release}
+Obsoletes: trento-supportconfig-plugin <= %{version}-%{release}
 Requires:  supportutils
-Requires:  yq
-Requires:  jq
-Requires:  helm
-Requires:  kubernetes-client
+Suggests:  yq
+Suggests:  jq
+Suggests:  helm
+Suggests:  kubernetes-client
 
 %description
 Supportconfig plugin for Trento.
