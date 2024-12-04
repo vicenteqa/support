@@ -204,7 +204,7 @@ fi
 
 ### Trento Server - Systemd ###
 if rpm -q --quiet trento-web; then
-    log_cmd $OF "rpm -qa | egrep 'trento|postgresql-server|rabbitmq-server|prometheus'"
+    log_cmd $OF "rpm -qa | grep -E 'trento|postgresql-server|rabbitmq-server|prometheus'"
     for RPM in trento-web trento-wanda postgresql-server rabbitmq-server prometheus
     do
         rpm_verify $OF $RPM
@@ -289,12 +289,12 @@ fi
 # /etc/trento/agent.yaml
 
 if rpm -q --quiet trento-agent; then
-    log_cmd $OF "rpm -qa | egrep 'trento-agent|golang-github-prometheus-node_exporter'"
+    log_cmd $OF "rpm -qa | grep -E 'trento-agent|golang-github-prometheus-node_exporter'"
     for RPM in trento-agent golang-github-prometheus-node_exporter
     do
         rpm_verify $OF $RPM
     done
-    for SERVICE in trento-agent.service prometheus-node_exporter.service
+    for SERVICE in trento-agent prometheus-node_exporter
     do
 		log_cmd $OF "systemctl status ${SERVICE}.service"
     done
@@ -304,4 +304,3 @@ fi
 
 
 _sanitize_file_trento $OF
-echolog Done
