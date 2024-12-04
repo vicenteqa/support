@@ -268,16 +268,10 @@ if rpm -q --quiet trento-web; then
         echo "Permissions should be: .*      .*      .*"
 
 		echo "#==[ Logs ]=========================================#"
-		for UNIT in trento-web trento-wanda postgresql-server rabbitmq-server prometheus; do
-			log_cmd $OF "journalctl -u ${UNIT} | tail -${VAR_OPTION_LINE_COUNT}
+		for UNIT in trento-web trento-wanda postgresql-server rabbitmq-server prometheus
+		do
+			log_cmd $OF "journalctl -u ${UNIT} | tail -${VAR_OPTION_LINE_COUNT}"
 		done
-
-
-		#log_cmd $OF "journalctl -u trento-web | tail -${VAR_OPTION_LINE_COUNT}"
-		#log_cmd $OF "journalctl -u trento-wanda | tail -${VAR_OPTION_LINE_COUNT}"
-		#log_cmd $OF "journalctl -u postgresql-server | tail -${VAR_OPTION_LINE_COUNT}"
-		#log_cmd $OF "journalctl -u rabbitmq-server | tail -${VAR_OPTION_LINE_COUNT}"
-		#log_cmd $OF "journalctl -u prometheus | tail -${VAR_OPTION_LINE_COUNT}"
 fi
 
 
