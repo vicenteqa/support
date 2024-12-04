@@ -9,6 +9,7 @@
 SVER='1.0.0'
 TITLE="Trento"
 
+VAR_OPTION_LINE_COUNT=500
 
 ### Check if executed by supportconfig ###
 PP_COMM="$(cat /proc/$(grep -i ppid /proc/$$/status | awk '{print $2}')/comm)"
@@ -98,6 +99,38 @@ log_cmd() {
 	_log_cmd "$@" >> $LOGFILE
 }
 
+# Input: logfilename lines logfiles...
+# If lines = 0, includes the entire log file
+log_files() {
+	LOGFILE=$LOG/$1
+	shift
+	LOGLINES=$1
+	shift
+	for CONF in $@
+	do
+		BAD_FILE=$(echo "$CONF" | egrep "\.tbz$|\.bz2$|\.gz$|\.zip$|\.xz$")
+		if [[ -n "$BAD_FILE" ]]; then
+			continue
+		fi
+		echo "#==[ Log File ]=====================================#" >> $LOGFILE
+		CONF=$(echo $CONF | sed -e "s/%7B%20%7D%7B%20%7D/ /g")
+		if [[ -f "$CONF" ]]; then
+			wait_trace_on "$CONF"
+			if ! (( $LOGLINES )); then
+				echo "# $CONF" >> $LOGFILE
+				sed -e 's/\r//g' "$CONF" >> $LOGFILE
+			else
+				echo "# $CONF - Last $LOGLINES Lines" >> $LOGFILE
+				tail -$LOGLINES "$CONF" | sed -e 's/\r//g' >> $LOGFILE
+			fi
+			echo >> $LOGFILE
+			wait_trace_off
+		else
+			echo "# $CONF - File not found" >> $LOGFILE
+		fi
+		echo >> $LOGFILE
+	done
+}
 
 fi
 ### END Check if executed by supportconfig ###
@@ -233,6 +266,18 @@ if rpm -q --quiet trento-web; then
         #TODO detect vhost name from AMQP_URL
         log_cmd $OF "rabbitmqctl list_permissions -p vhost 2>/dev/null"
         echo "Permissions should be: .*      .*      .*"
+
+		echo "#==[ Logs ]=========================================#"
+		for UNIT in trento-web trento-wanda postgresql-server rabbitmq-server prometheus; do
+			log_cmd $OF "journalctl -u ${UNIT} | tail -${VAR_OPTION_LINE_COUNT}
+		done
+
+
+		#log_cmd $OF "journalctl -u trento-web | tail -${VAR_OPTION_LINE_COUNT}"
+		#log_cmd $OF "journalctl -u trento-wanda | tail -${VAR_OPTION_LINE_COUNT}"
+		#log_cmd $OF "journalctl -u postgresql-server | tail -${VAR_OPTION_LINE_COUNT}"
+		#log_cmd $OF "journalctl -u rabbitmq-server | tail -${VAR_OPTION_LINE_COUNT}"
+		#log_cmd $OF "journalctl -u prometheus | tail -${VAR_OPTION_LINE_COUNT}"
 fi
 
 
@@ -253,6 +298,8 @@ if rpm -q --quiet trento-agent; then
     do
 		log_cmd $OF "systemctl status ${SERVICE}.service"
     done
+
+	log_cmd $OF "journalctl -u trento-agent | tail -${VAR_OPTION_LINE_COUNT}"
 fi
 
 
