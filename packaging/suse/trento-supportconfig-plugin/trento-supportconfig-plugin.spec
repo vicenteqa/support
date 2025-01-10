@@ -29,7 +29,6 @@ BuildRoot: %{_tmppath}/%{name}-%{version}-build
 BuildArch: noarch
 Provides:  %{name} = %{version}-%{release}
 Requires:  supportconfig-plugin-resource
-Requires:  supportconfig-plugin-tag
 Requires:  yq
 Requires:  jq
 Requires:  helm
