@@ -28,8 +28,7 @@ Source:    %{name}-%{version}.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-build
 BuildArch: noarch
 Provides:  %{name} = %{version}-%{release}
-Requires:  supportconfig-plugin-resource
-Requires:  supportconfig-plugin-tag
+Requires:  supportutils
 Requires:  yq
 Requires:  jq
 Requires:  helm
