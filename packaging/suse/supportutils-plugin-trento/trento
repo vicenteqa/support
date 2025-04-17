@@ -1,0 +1,271 @@
+#!/bin/bash
+#############################################################
+# Name:        Supportconfig Plugin for SUSE Trento
+# Description: Gathers important troubleshooting information
+#              about a SUSE Trento SAP console
+# License:     GPLv2
+#############################################################
+
+SVER='1.0.0'
+TITLE="Trento"
+VAR_OPTION_LINE_COUNT=500
+
+### Check if executed by supportconfig ###
+PP_COMM="$(cat /proc/$(grep -i ppid /proc/$$/status | awk '{print $2}')/comm)"
+if [[ $PP_COMM == "supportconfig" ]]; then
+    RCFILE="/usr/lib/supportconfig/resources/supportconfig.rc"
+    OF=plugin-trento.txt
+    [ -s $RCFILE ] && . $RCFILE || {
+        echo "ERROR: Initializing resource file: $RCFILE"
+        exit 1
+    }
+else
+    OF=trento-support-$(hostname)-$(date +%Y%m%d-%H%M%S).txt
+
+    rpm_verify() {
+        LOGFILE=$LOG/$1
+        INPUT_RPM=$2
+        echo "#==[ Verification ]=================================#" >>$LOGFILE
+        if rpm -q $INPUT_RPM &>/dev/null; then
+            for RPM in $(rpm -q $INPUT_RPM); do
+                echo "# rpm -V $RPM" >>$LOGFILE
+                rpm -V $RPM >>$LOGFILE 2>&1
+                ERR=$?
+                if (($ERR)); then
+                    echo "# Verification Status: Differences Found" >>$LOGFILE
+                else
+                    echo "# Verification Status: Passed" >>$LOGFILE
+                fi
+                echo >>$LOGFILE
+            done
+            return 0
+        else
+            echo "# RPM Not Installed: $INPUT_RPM" >>$LOGFILE
+            echo >>$LOGFILE
+            return 1
+        fi
+    }
+
+    # log_entry file type label
+    log_entry() {
+        LOGFILE=$LOG/$1
+        shift
+        ENTRY_TYPE=$1
+        shift
+        ENTRY_LABEL="$@"
+        case $ENTRY_TYPE in
+        command) ENTRY_HEADER="#==[ Command ]======================================#" ;;
+        conf) ENTRY_HEADER="#==[ Configuration File ]===========================#" ;;
+        log) ENTRY_HEADER="#==[ Log File ]=====================================#" ;;
+        note) ENTRY_HEADER="#==[ Note ]=========================================#" ;;
+        summary) ENTRY_HEADER="#==[ Summary ]======================================#" ;;
+        *) ENTRY_HEADER="#==[ Entry ]========================================#" ;;
+        esac
+        echo "$ENTRY_HEADER" >>$LOGFILE
+        echo "# $ENTRY_LABEL" >>$LOGFILE
+        echo >>$LOGFILE
+    }
+
+    # Input: logfilename "text"
+    log_write() {
+        LOGFILE=$LOG/$1
+        shift
+        echo "$@" >>$LOGFILE
+    }
+
+    _log_cmd() {
+        EXIT_STATUS=0
+        shift
+        CMDLINE=($@)
+        CMDBIN=${CMDLINE[0]}
+        CMD=($(command -v $CMDBIN))
+        echo "#==[ Command ]======================================#"
+        if [[ -x "${CMD[0]}" ]]; then
+            CMDLINE[0]="${CMD[0]}"
+            echo "# ${CMDLINE[@]}"
+            bash -c "${CMDLINE[*]}" 2>&1
+            EXIT_STATUS=$?
+        else
+            echo "# ${CMDLINE[@]}"
+            echo "ERROR: Command not found or not executable"
+            EXIT_STATUS=1
+        fi
+        echo
+        return $EXIT_STATUS
+    }
+
+    # Input: logfilename lines logfiles...
+    # If lines = 0, includes the entire log file
+    log_files() {
+        LOGFILE=$LOG/$1
+        shift
+        LOGLINES=$1
+        shift
+        for CONF in $@; do
+            BAD_FILE=$(echo "$CONF" | egrep "\.tbz$|\.bz2$|\.gz$|\.zip$|\.xz$")
+            if [[ -n "$BAD_FILE" ]]; then
+                continue
+            fi
+            echo "#==[ Log File ]=====================================#" >>$LOGFILE
+            CONF=$(echo $CONF | sed -e "s/%7B%20%7D%7B%20%7D/ /g")
+            if [[ -f "$CONF" ]]; then
+                wait_trace_on "$CONF"
+                if ! (($LOGLINES)); then
+                    echo "# $CONF" >>$LOGFILE
+                    sed -e 's/\r//g' "$CONF" >>$LOGFILE
+                else
+                    echo "# $CONF - Last $LOGLINES Lines" >>$LOGFILE
+                    tail -$LOGLINES "$CONF" | sed -e 's/\r//g' >>$LOGFILE
+                fi
+                echo >>$LOGFILE
+                wait_trace_off
+            else
+                echo "# $CONF - File not found" >>$LOGFILE
+            fi
+            echo >>$LOGFILE
+        done
+    }
+
+fi
+### END Check if executed by supportconfig ###
+
+### TODO ###
+# Detect and use usernames/database names/vhost name from config
+#check firewall
+#run standalone if not executed by supportconfig
+# dump-scenario
+# Use GNUGPL2 license to match supportutils, instead of Apache-2.0?
+
+#TODO sanitize these values
+# password from AMQP_URL
+# password from DATABASE_URL
+# password from EVENTSTORE_URL
+# postgresql-password
+# postgresql-postgres-password
+# .secretKeyRef
+# adminUser
+# admin-user
+# admin-password
+# SMTP_PASSWORD
+# ADMIN_USER
+# ADMIN_PASSWORD
+# SECRET_KEY_BASE
+# ACCESS_TOKEN_ENC_SECRET
+# REFRESH_TOKEN_ENC_SECRET
+_sanitize_file_trento() {
+    CLEAN_FILE=${LOG}/$1
+    REPLACED='*REMOVED BY SUPPORTCONFIG*'
+    sed -i -e "\
+	s/\(ADMIN_PASSWORD[[:space:]]*=\).*/\1 $REPLACED/g;\
+	s/\(SECRET_KEY_BASE[[:space:]]*=\).*/\1 $REPLACED/g;\
+	s/\(ACCESS_TOKEN_ENC_SECRET[[:space:]]*=\).*/\1 $REPLACED/g;\
+	s/\(REFRESH_TOKEN_ENC_SECRET[[:space:]]*=\).*/\1 $REPLACED/g;\
+	s/\(SMTP_PASSWORD[[:space:]]*=\).*/\1 $REPLACED/g" \
+        $CLEAN_FILE
+}
+
+## Docs  ##
+log_entry $OF section "Current Documentation"
+echo -e "\
+https://documentation.suse.com/sles-sap/trento/html/SLES-SAP-trento/
+https://www.trento-project.io/web/
+https://www.trento-project.io/wanda/
+https://github.com/trento-project/agent/blob/main/README.md
+"
+#############################################################
+log_entry $OF section "Supportconfig Plugin for $TITLE v${SVER}"
+
+## Check for different Trento deployment types ##
+
+### Trento Server - Kubernetes ###
+if rpm -q --quiet helm kubernetes-client; then
+    command -v trento-support &>/dev/null &&
+        trento-support --output stdout --collect all --output stdout
+fi
+
+### Trento Server - Systemd ###
+if rpm -q --quiet trento-web; then
+    log_cmd $OF "rpm -qa | egrep 'trento|postgresql-server|rabbitmq-server|prometheus'"
+    for RPM in trento-web trento-wanda postgresql-server rabbitmq-server prometheus; do
+        rpm_verify $OF $RPM
+    done
+    for SERVICE in trento-web trento-wanda postgresql rabbitmq-server prometheus; do
+        log_cmd $OF "systemctl status --lines=0 ${SERVICE}.service"
+    done
+
+    conf_files $OF /etc/trento/trento-web /etc/trento/trento-wanda /var/lib/pgsql/data/postgresql.conf /var/lib/pgsql/data/pg_hba.conf /etc/rabbitmq/rabbitmq.conf /etc/prometheus/prometheus.yml
+    echo
+    log_entry $OF section "Trento Web/Wanda health status"
+    log_cmd $OF curl -sS http://localhost:4000/api/readyz
+    echo
+    log_cmd $OF curl -sS http://localhost:4000/api/healthz
+    echo
+    log_cmd $OF curl -sS http://localhost:4001/api/readyz
+    echo
+    log_cmd $OF curl -sS http://localhost:4001/api/healthz
+    echo
+    echo
+
+    log_entry $OF section "Postgresql Section"
+
+    echo "#==[ Postgresql permissions ]=======================#"
+    echo "#==[ Trento databases ]=============================#"
+    DB_TRENTO=""
+    DB_TRENTO_EVENTS=""
+    DB_WANDA=""
+    DB_TRENTO_USER=""
+    DB_WANDA_USER=""
+    #TODO use detected database names
+    su - postgres -c 'psql -tlq | cut -d \| -f 1 | grep -wE "trento|trento_event_store|wanda"'
+    echo
+
+    echo "#==[ trento database permissions ]==================#"
+    #TODO detect trento-web database name/user from trento-web's DATABASE_URL
+    su - postgres -c "psql -d trento -c \"
+            SELECT grantor, grantee, table_schema, table_name, privilege_type 
+            FROM information_schema.table_privileges 
+            WHERE grantee = 'trento_user'\""
+
+    echo "#==[ trento_event_store database permissions ]======#"
+    #TODO detect trento-web database name/user from trento-web's EVENTSTORE_URL
+    su - postgres -c "psql -d trento_event_store -c \"
+            SELECT grantor, grantee, table_schema, table_name, privilege_type 
+            FROM information_schema.table_privileges 
+            WHERE grantee = 'trento_user'\""
+
+    echo "#==[ wanda database permissions ]===================#"
+    #TODO detect trento-wanda database name/user from trento-wanda's DATABASE_URL
+    su - postgres -c "psql -d wanda -c \"
+            SELECT grantor, grantee, table_schema, table_name, privilege_type 
+            FROM information_schema.table_privileges 
+            WHERE grantee = 'wanda_user'\""
+
+    log_entry $OF section "Rabbitmq Section"
+    #TODO detect vhost name from AMQP_URL
+    log_cmd $OF "rabbitmqctl list_permissions -p vhost 2>/dev/null"
+    echo "Permissions should be: .*      .*      .*"
+
+    echo "#==[ Logs ]=========================================#"
+    for UNIT in trento-web trento-wanda postgresql-server rabbitmq-server prometheus; do
+        log_cmd $OF "journalctl -u ${UNIT} | tail -${VAR_OPTION_LINE_COUNT}"
+    done
+fi
+
+### Trento Agent ###
+#TODO
+# collect /etc/machine-id
+# /etc/trento/agent.yaml
+
+if rpm -q --quiet trento-agent; then
+    log_cmd $OF "rpm -qa | egrep 'trento-agent|golang-github-prometheus-node_exporter'"
+    for RPM in trento-agent golang-github-prometheus-node_exporter; do
+        rpm_verify $OF $RPM
+    done
+    for SERVICE in trento-agent.service prometheus-node_exporter.service; do
+        log_cmd $OF "systemctl status ${SERVICE}.service"
+    done
+
+    log_cmd $OF "journalctl -u trento-agent | tail -${VAR_OPTION_LINE_COUNT}"
+fi
+
+_sanitize_file_trento $OF
