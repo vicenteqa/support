@@ -18,7 +18,7 @@ env:
 
 jobs:
   obs-commit:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     if: github.ref == 'refs/heads/main' || github.event_name == 'release'
     container:
       image: ghcr.io/trento-project/continuous-delivery:main
