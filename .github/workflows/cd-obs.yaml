@@ -55,7 +55,7 @@ jobs:
           osc checkout $OBS_PROJECT $PACKAGE -o $DEST_FOLDER
           cp $PACKAGE_FOLDER/_service $DEST_FOLDER
           cp $PACKAGE_FOLDER/${PACKAGE}.spec $DEST_FOLDER
-          rm $DEST_FOLDER/*.tar.gz
+          rm -fv $DEST_FOLDER/*.tar.gz
           pushd $DEST_FOLDER
           osc service manualrun
       - name: Prepare .changes file
