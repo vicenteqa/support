@@ -178,17 +178,10 @@ log_entry $OF section "Supportconfig Plugin for $TITLE v${SVER}"
 ## Check for different Trento deployment types ##
 
 ### Trento Server - Kubernetes ###
-#TODO
-if rpm -q --quiet trento-server-installer; then
+if rpm -q --quiet helm kubernetes-client; then
     command -v trento-support &>/dev/null &&
         trento-support --output stdout --collect all --output stdout
 fi
-
-### Trento Server - Docker ###
-#TODO
-#command -v docker &>/dev/null
-#command -v podman &>/dev/null
-# images: trento/trento-web & trento/trento-wanda
 
 ### Trento Server - Systemd ###
 if rpm -q --quiet trento-web; then
