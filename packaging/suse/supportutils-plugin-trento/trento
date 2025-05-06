@@ -261,7 +261,7 @@ if rpm -q --quiet trento-agent; then
     for RPM in trento-agent golang-github-prometheus-node_exporter; do
         rpm_verify $OF $RPM
     done
-    for SERVICE in trento-agent.service prometheus-node_exporter.service; do
+    for SERVICE in trento-agent prometheus-node_exporter; do
         log_cmd $OF "systemctl status ${SERVICE}.service"
     done
 
