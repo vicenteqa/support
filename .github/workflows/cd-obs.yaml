@@ -32,11 +32,11 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: actions-ecosystem/action-get-latest-tag@v1
-        id: latest-tag
-        with:
-          semver_only: true
-          initial_version: 0.0.1
+      # - uses: actions-ecosystem/action-get-latest-tag@v1
+      #   id: latest-tag
+      #   with:
+      #     semver_only: true
+      #     initial_version: 0.0.1
       - name: Configure OSC
         run: |
           mkdir -p $HOME/.config/osc
@@ -63,8 +63,18 @@ jobs:
         if: github.event_name == 'release'
         run: |
           CHANGES_FILE=${PACKAGE}.changes
-          TAG=${{ steps.latest-tag.outputs.tag }}
-          /scripts/gh_release_to_obs_changeset.py ${{ github.repository }} -a trento-developers@suse.com -t $TAG -f $DEST_FOLDER/$CHANGES_FILE
+          
+          SEMVER_REGEX="^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-Z-]+(?:\.[0-9a-Z-]+)*))?$"
+          
+          TAG=$(git tag | grep -P "$SEMVER_REGEX" | sed '/-/!{s/$/_/}' | sort -V | sed 's/_$//' | tail -n1) || \
+            { echo "Error: No valid SemVer tag found in the repository. Required for .changes file preparation." 1>&2; exit 1; }
+          
+          if [ -z "${TAG}" ]; then
+            echo "Error: SemVer tag retrieval failed and version could not be determined." 1>&2
+            exit 1
+          fi
+          
+          /scripts/gh_release_to_obs_changeset.py ${{ github.repository }} -a trento-developers@suse.com -t "$TAG" -f "$DEST_FOLDER/$CHANGES_FILE"
       - name: Commit on OBS
         run: |
           pushd $DEST_FOLDER
