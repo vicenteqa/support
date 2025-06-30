@@ -14,7 +14,7 @@ on:
 env:
   OBS_USER: ${{ secrets.OBS_USER }}
   OBS_PASS: ${{ secrets.OBS_PASSWORD }}
-  OBS_PROJECT: ${{ vars.OBS_PROJECT }} 
+  OBS_PROJECT: ${{ vars.OBS_PROJECT }}
 
 jobs:
   obs-commit:
@@ -39,92 +39,33 @@ jobs:
           initial_version: 0.0.1
       - name: Configure OSC
         run: |
-          mkdir -p "$HOME/.config/osc"
-          cp /home/osc/.config/osc/oscrc "$HOME/.config/osc"
+          mkdir -p $HOME/.config/osc
+          cp /home/osc/.config/osc/oscrc $HOME/.config/osc
           /scripts/init_osc_creds.sh
-      - name: Prepare _service file with version details (DEBUG)
+      - name: Prepare _service file with version details
         run: |
           git config --global --add safe.directory /__w/support/support
-
-          # --- INICIO DEPURACIÓN DE VARIABLES FOLDER/PACKAGE ---
-          echo "DEBUG: Valor de FOLDER: '${FOLDER}'"
-          echo "DEBUG: Valor de PACKAGE: '${PACKAGE}'"
-          # --- FIN DEPURACIÓN DE VARIABLES FOLDER/PACKAGE ---
-
-          # --- INICIO DEPURACIÓN DEL SCRIPT GET_VERSION_FROM_GIT.SH ---
-          echo "DEBUG: Comprobando existencia y permisos de /scripts/get_version_from_git.sh..."
-          if [ ! -f "/scripts/get_version_from_git.sh" ]; then
-            echo "ERROR: El script /scripts/get_version_from_git.sh NO existe."
-            ls -l /scripts/ # Lista el contenido del directorio /scripts
-            exit 1
-          fi
-          if [ ! -x "/scripts/get_version_from_git.sh" ]; then
-            echo "ERROR: El script /scripts/get_version_from_git.sh NO tiene permisos de ejecución."
-            ls -l /scripts/ # Lista el contenido del directorio /scripts para ver permisos
-            exit 1
-          fi
-          
-          echo "DEBUG: Intentando ejecutar /scripts/get_version_from_git.sh y capturando su salida..."
-          # Ejecuta el script, redirige stderr a stdout, y guarda el código de salida
-          # La salida (stdout + stderr) se guarda en SCRIPT_OUTPUT
-          # El código de salida se guarda en SCRIPT_EXIT_CODE
-          if SCRIPT_OUTPUT=$(/scripts/get_version_from_git.sh 2>&1); then
-            SCRIPT_EXIT_CODE=0
-          else
-            SCRIPT_EXIT_CODE=$?
-          fi
-          
-          echo "DEBUG: Salida COMPLETA de /scripts/get_version_from_git.sh:"
-          echo "${SCRIPT_OUTPUT}" # Imprime toda la salida (éxito o error)
-          echo "DEBUG: Código de salida de /scripts/get_version_from_git.sh: ${SCRIPT_EXIT_CODE}"
-
-          if [ ${SCRIPT_EXIT_CODE} -ne 0 ]; then
-            echo "ERROR: El script /scripts/get_version_from_git.sh falló con código de salida ${SCRIPT_EXIT_CODE}. Por favor, revisa la 'Salida COMPLETA' de arriba para el mensaje de error."
-            exit 1
-          fi
-
-          # Ahora que sabemos que el script no falló, podemos asignar la salida a VERSION
-          VERSION="${SCRIPT_OUTPUT}"
-          if [ -z "$VERSION" ]; then
-            echo "ERROR: La variable VERSION está vacía. El script no devolvió ninguna versión o la salida era solo espacios/saltos de línea."
-            exit 1
-          fi
-
-          PACKAGE_FOLDER="${FOLDER}/${PACKAGE}"
-          
-          # --- INICIO DEPURACIÓN DE LA CARPETA DEL PAQUETE ---
-          echo "DEBUG: Ruta calculada de PACKAGE_FOLDER: '${PACKAGE_FOLDER}'"
-          if [ ! -d "$PACKAGE_FOLDER" ]; then
-            echo "ERROR: La carpeta '$PACKAGE_FOLDER' no existe. Asegúrate de que la ruta sea correcta y que el 'Checkout' haya descargado todo el código."
-            ls -l "$(dirname "$PACKAGE_FOLDER")" # Lista contenido del directorio padre
-            exit 1
-          fi
-          if [ ! -f "$PACKAGE_FOLDER/_service" ]; then
-            echo "ERROR: El archivo '$PACKAGE_FOLDER/_service' no existe dentro de la carpeta del paquete. Verifica su existencia y la ruta."
-            ls -l "$PACKAGE_FOLDER" # Lista contenido de la carpeta del paquete
-            exit 1
-          fi
-          # --- FIN DEPURACIÓN DE LA CARPETA DEL PAQUETE ---
-
-          sed -i 's~%%REVISION%%~${{ github.sha }}~' "$PACKAGE_FOLDER/_service" && \
-          sed -i 's~%%VERSION%%~'"${VERSION}"'~' "$PACKAGE_FOLDER/_service"
+          VERSION=$(/scripts/get_version_from_git.sh)
+          PACKAGE_FOLDER=$FOLDER/$PACKAGE
+          sed -i 's~%%REVISION%%~${{ github.sha }}~' $PACKAGE_FOLDER/_service && \
+          sed -i 's~%%VERSION%%~'"${VERSION}"'~' $PACKAGE_FOLDER/_service
       - name: Prepare OBS package
         run: |
           PACKAGE_FOLDER=$FOLDER/$PACKAGE
-          osc checkout "$OBS_PROJECT" "$PACKAGE" -o "$DEST_FOLDER"
-          cp "$PACKAGE_FOLDER/_service" "$DEST_FOLDER"
-          cp "$PACKAGE_FOLDER/${PACKAGE}.spec" "$DEST_FOLDER"
-          rm -fv "$DEST_FOLDER/*.tar.gz"
-          pushd "$DEST_FOLDER"
+          osc checkout $OBS_PROJECT $PACKAGE -o $DEST_FOLDER
+          cp $PACKAGE_FOLDER/_service $DEST_FOLDER
+          cp $PACKAGE_FOLDER/${PACKAGE}.spec $DEST_FOLDER
+          rm -fv $DEST_FOLDER/*.tar.gz
+          pushd $DEST_FOLDER
           osc service manualrun
       - name: Prepare .changes file
         if: github.event_name == 'release'
         run: |
-          CHANGES_FILE="${PACKAGE}.changes"
-          TAG="${{ steps.latest-tag.outputs.tag }}"
-          /scripts/gh_release_to_obs_changeset.py "${{ github.repository }}" -a trento-developers@suse.com -t "$TAG" -f "$DEST_FOLDER/$CHANGES_FILE"
+          CHANGES_FILE=${PACKAGE}.changes
+          TAG=${{ steps.latest-tag.outputs.tag }}
+          /scripts/gh_release_to_obs_changeset.py ${{ github.repository }} -a trento-developers@suse.com -t $TAG -f $DEST_FOLDER/$CHANGES_FILE
       - name: Commit on OBS
         run: |
-          pushd "$DEST_FOLDER"
+          pushd $DEST_FOLDER
           osc ar
           osc commit -m "GitHub Actions automated update to reference ${{ github.sha }}"
