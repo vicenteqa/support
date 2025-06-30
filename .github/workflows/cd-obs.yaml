@@ -45,7 +45,6 @@ jobs:
       - name: Prepare _service file with version details
         run: |
           git config --global --add safe.directory /__w/support/support
-          cat /scripts/get_version_from_git.sh
           VERSION=$(/scripts/get_version_from_git.sh)
           PACKAGE_FOLDER=$FOLDER/$PACKAGE
           sed -i 's~%%REVISION%%~${{ github.sha }}~' $PACKAGE_FOLDER/_service && \
@@ -53,6 +52,7 @@ jobs:
       - name: Prepare OBS package
         run: |
           PACKAGE_FOLDER=$FOLDER/$PACKAGE
+          rm -rf $DEST_FOLDER
           osc checkout $OBS_PROJECT $PACKAGE -o $DEST_FOLDER
           cp $PACKAGE_FOLDER/_service $DEST_FOLDER
           cp $PACKAGE_FOLDER/${PACKAGE}.spec $DEST_FOLDER
