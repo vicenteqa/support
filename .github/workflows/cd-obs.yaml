@@ -13,7 +13,7 @@ on:
 
 env:
   OBS_USER: ${{ secrets.OBS_USER }}
-  OBS_PASS: ${{ secrets.OBS_PASSWORD }} 
+  OBS_PASS: ${{ secrets.OBS_PASSWORD }}
   OBS_PROJECT: ${{ vars.OBS_PROJECT }} 
 
 jobs:
@@ -64,24 +64,31 @@ jobs:
             exit 1
           fi
           
-          echo "DEBUG: Ejecutando /scripts/get_version_from_git.sh..."
-          # Ejecuta el script y captura su salida estándar y de error
-          VERSION=$(/scripts/get_version_from_git.sh 2>&1)
-          SCRIPT_EXIT_CODE=$? # Captura el código de salida del script
+          echo "DEBUG: Intentando ejecutar /scripts/get_version_from_git.sh y capturando su salida..."
+          # Ejecuta el script, redirige stderr a stdout, y guarda el código de salida
+          # La salida (stdout + stderr) se guarda en SCRIPT_OUTPUT
+          # El código de salida se guarda en SCRIPT_EXIT_CODE
+          if SCRIPT_OUTPUT=$(/scripts/get_version_from_git.sh 2>&1); then
+            SCRIPT_EXIT_CODE=0
+          else
+            SCRIPT_EXIT_CODE=$?
+          fi
           
-          echo "DEBUG: Salida de /scripts/get_version_from_git.sh: '${VERSION}'"
+          echo "DEBUG: Salida COMPLETA de /scripts/get_version_from_git.sh:"
+          echo "${SCRIPT_OUTPUT}" # Imprime toda la salida (éxito o error)
           echo "DEBUG: Código de salida de /scripts/get_version_from_git.sh: ${SCRIPT_EXIT_CODE}"
 
           if [ ${SCRIPT_EXIT_CODE} -ne 0 ]; then
-            echo "ERROR: El script /scripts/get_version_from_git.sh falló con código de salida ${SCRIPT_EXIT_CODE}. Revisa la salida anterior del script."
-            exit 1 # Fuerza un fallo si el script no tuvo éxito
+            echo "ERROR: El script /scripts/get_version_from_git.sh falló con código de salida ${SCRIPT_EXIT_CODE}. Por favor, revisa la 'Salida COMPLETA' de arriba para el mensaje de error."
+            exit 1
           fi
 
+          # Ahora que sabemos que el script no falló, podemos asignar la salida a VERSION
+          VERSION="${SCRIPT_OUTPUT}"
           if [ -z "$VERSION" ]; then
-            echo "ERROR: La variable VERSION está vacía A PESAR de que el script pudo haber tenido éxito. El script no devolvió ninguna versión."
-            exit 1 # Fuerza un fallo si la versión está vacía
+            echo "ERROR: La variable VERSION está vacía. El script no devolvió ninguna versión o la salida era solo espacios/saltos de línea."
+            exit 1
           fi
-          # --- FIN DEPURACIÓN DEL SCRIPT GET_VERSION_FROM_GIT.SH ---
 
           PACKAGE_FOLDER="${FOLDER}/${PACKAGE}"
           
