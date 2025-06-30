@@ -51,6 +51,8 @@ jobs:
           # Set the found tag as a step output using the new GITHUB_OUTPUT method
           echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
         shell: bash
+      - name: show latest tag
+        run: echo ${{ steps.latest-tag.outputs.tag }}
       - name: Configure OSC
         run: |
           mkdir -p $HOME/.config/osc
