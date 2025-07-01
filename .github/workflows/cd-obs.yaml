@@ -58,7 +58,7 @@ jobs:
           initial_version: 0.0.1
       - name: echo tag values for both ways of getting them
         run: |
-          echo actionWay ${{steps.latest-tag.outputs.tagA}}
+          echo actionWay ${{steps.latest-tagA.outputs.tag}}
           echo scriptWay ${{steps.latest-tag.outputs.tag}}            
       - name: Configure OSC
         run: |
