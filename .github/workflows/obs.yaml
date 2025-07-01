@@ -10,7 +10,7 @@ on:
     secrets:
       OBS_USER:
         required: true
-      OBS_PASS:
+      OBS_PASSWORD:
         required: true
 
 env:
