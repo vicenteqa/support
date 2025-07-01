@@ -11,9 +11,6 @@ on:
     types: [published]
   workflow_dispatch:
 
-env:
-  OBS_PROJECT: ${{ vars.OBS_PROJECT }}
-
 jobs:
   obs-cd:
     name: Update OBS package
@@ -21,7 +18,7 @@ jobs:
     uses: ./.github/workflows/obs.yaml
     secrets: inherit
     with:
-      obs_project: ${{ env.OBS_PROJECT }}
+      obs_project: ${{ vars.OBS_PROJECT }}
 
 
     
