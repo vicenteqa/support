@@ -16,7 +16,9 @@ jobs:
     name: Update OBS package
     if: github.ref == 'refs/heads/main' || github.event_name == 'release'
     uses: ./.github/workflows/obs.yaml
-    secrets: inherit
+    secrets: 
+      OBS_USER: ${{ secrets.OBS_USER }}
+      OBS_PASS: ${{ secrets.OBS_PASSWORD }}
     with:
       obs_project: ${{ vars.OBS_PROJECT }}
 
