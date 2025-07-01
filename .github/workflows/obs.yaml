@@ -16,7 +16,7 @@ on:
 env:
   OBS_PROJECT: ${{ inputs.obs_project }}
   OBS_USER: ${{ secrets.OBS_USER }}
-  OBS_PASS: ${{ secrets.OBS_PASS }}
+  OBS_PASS: ${{ secrets.OBS_PASSWORD }}
   AUTHOR_EMAIL: trento-developers@suse.com
 
 jobs:
