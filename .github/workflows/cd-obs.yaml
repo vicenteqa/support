@@ -56,7 +56,6 @@ jobs:
           fi
 
           # Output the tag so subsequent steps can use it.
-          # This uses the modern GITHUB_OUTPUT method, avoiding set-output warning.
           echo "tag=$LATEST_TAG" >> "$GITHUB_OUTPUT"
 
           echo "Detected latest SemVer tag: $LATEST_TAG"
