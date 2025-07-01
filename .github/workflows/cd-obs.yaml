@@ -32,7 +32,29 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - name: Configure OSC
+        run: |
+          mkdir -p $HOME/.config/osc
+          cp /home/osc/.config/osc/oscrc $HOME/.config/osc
+          /scripts/init_osc_creds.sh
+      - name: Prepare _service file with version details
+        run: |
+          git config --global --add safe.directory /__w/support/support
+          VERSION=$(/scripts/get_version_from_git.sh)
+          PACKAGE_FOLDER=$FOLDER/$PACKAGE
+          sed -i 's~%%REVISION%%~${{ github.sha }}~' $PACKAGE_FOLDER/_service && \
+          sed -i 's~%%VERSION%%~'"${VERSION}"'~' $PACKAGE_FOLDER/_service
+      - name: Prepare OBS package
+        run: |
+          PACKAGE_FOLDER=$FOLDER/$PACKAGE
+          osc checkout $OBS_PROJECT $PACKAGE -o $DEST_FOLDER
+          cp $PACKAGE_FOLDER/_service $DEST_FOLDER
+          cp $PACKAGE_FOLDER/${PACKAGE}.spec $DEST_FOLDER
+          rm -fv $DEST_FOLDER/*.tar.gz
+          pushd $DEST_FOLDER
+          osc service manualrun
       - name: Get Latest SemVer Tag from Git
+        if: github.event_name == 'release'
         id: latest-tag
         run: |
           git config --global --add safe.directory /__w/support/support
@@ -59,27 +81,6 @@ jobs:
           echo "tag=$LATEST_TAG" >> "$GITHUB_OUTPUT"
 
           echo "Detected latest SemVer tag: $LATEST_TAG"
-      - name: Configure OSC
-        run: |
-          mkdir -p $HOME/.config/osc
-          cp /home/osc/.config/osc/oscrc $HOME/.config/osc
-          /scripts/init_osc_creds.sh
-      - name: Prepare _service file with version details
-        run: |
-          git config --global --add safe.directory /__w/support/support
-          VERSION=$(/scripts/get_version_from_git.sh)
-          PACKAGE_FOLDER=$FOLDER/$PACKAGE
-          sed -i 's~%%REVISION%%~${{ github.sha }}~' $PACKAGE_FOLDER/_service && \
-          sed -i 's~%%VERSION%%~'"${VERSION}"'~' $PACKAGE_FOLDER/_service
-      - name: Prepare OBS package
-        run: |
-          PACKAGE_FOLDER=$FOLDER/$PACKAGE
-          osc checkout $OBS_PROJECT $PACKAGE -o $DEST_FOLDER
-          cp $PACKAGE_FOLDER/_service $DEST_FOLDER
-          cp $PACKAGE_FOLDER/${PACKAGE}.spec $DEST_FOLDER
-          rm -fv $DEST_FOLDER/*.tar.gz
-          pushd $DEST_FOLDER
-          osc service manualrun
       - name: Prepare .changes file
         if: github.event_name == 'release'
         run: |
