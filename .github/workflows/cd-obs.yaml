@@ -35,6 +35,7 @@ jobs:
       - name: Get Latest SemVer Tag from Git
         id: latest-tag
         run: |
+          git config --global --add safe.directory /__w/support/support
           # Exit immediately if a command exits with a non-zero status.
           set -e
           # Exit if any command in a pipeline fails.
