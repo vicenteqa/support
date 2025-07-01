@@ -32,34 +32,11 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Get Latest SemVer Tag
+      - uses: actions-ecosystem/action-get-latest-tag@v1.3.4
         id: latest-tag
-        run: |
-          git config --global --add safe.directory /__w/support/support
-          # Define the Semantic Versioning regex
-          SEMVER_REGEX="^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$"
-          
-          # Get all tags, filter for SemVer, sort numerically, and get the last (latest) one.
-          TAG=$(git tag | grep -P "$SEMVER_REGEX" | sed '/-/!{s/$/_/}' | sort -V | sed 's/_$//' | tail -n1)
-          
-          # Check if a tag was found. If not, exit with an error.
-          if [ -z "${TAG}" ]; then
-            echo "Error: No valid SemVer tag found in the repository. A tag is required for this workflow." 1>&2
-            exit 1
-          fi
-          
-          # Set the found tag as a step output using the new GITHUB_OUTPUT method
-          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
-        shell: bash
-      - uses: actions-ecosystem/action-get-latest-tag@v1
-        id: latest-tagA
         with:
           semver_only: true
-          initial_version: 0.0.1
-      - name: echo tag values for both ways of getting them
-        run: |
-          echo actionWay ${{steps.latest-tagA.outputs.tag}}
-          echo scriptWay ${{steps.latest-tag.outputs.tag}}            
+          initial_version: 0.0.1           
       - name: Configure OSC
         run: |
           mkdir -p $HOME/.config/osc
