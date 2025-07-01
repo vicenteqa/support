@@ -1,25 +1,25 @@
-name: Continous Delivery to SUSE OBS
-concurrency: cd-obs-${{ github.ref }}
-on:
-  push:
-    tags-ignore:
-      - "*"
-    branches:
-      - "main"
-  pull_request:
-  release:
-    types: [published]
-  workflow_dispatch:
+name: OBS release
+
+on: 
+  workflow_call:
+    inputs:
+      obs_project:
+        type: string
+        required: true
+        description: The OBS project to commit changes to.
+    secrets:
+      OBS_USER:
+        required: true
+      OBS_PASS:
+        required: true
 
 env:
-  OBS_USER: ${{ secrets.OBS_USER }}
-  OBS_PASS: ${{ secrets.OBS_PASSWORD }}
-  OBS_PROJECT: ${{ vars.OBS_PROJECT }}
+  OBS_PROJECT: ${{ inputs.obs_project }}
+  AUTHOR_EMAIL: trento-developers@suse.com
 
 jobs:
   obs-commit:
     runs-on: ubuntu-24.04
-    if: github.ref == 'refs/heads/main' || github.event_name == 'release'
     container:
       image: ghcr.io/trento-project/continuous-delivery:main
       env:
