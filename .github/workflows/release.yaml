@@ -1,24 +1,17 @@
-name: Continous Delivery to SUSE OBS
+name: Continous Delivery to SUSE OBS Release Project
 concurrency: cd-obs-${{ github.ref }}
 on:
-  push:
-    tags-ignore:
-      - "*"
-    branches:
-      - "main"
-  pull_request:
   release:
     types: [published]
-  workflow_dispatch:
 
 jobs:
   obs-cd:
     name: Update OBS package
-    if: github.ref == 'refs/heads/main' || github.event_name == 'release'
     uses: ./.github/workflows/obs.yaml
     secrets: inherit
     with:
-      obs_project: ${{ vars.OBS_PROJECT }}
+      obs_project: ${{ vars.OBS_PROJECT_STABLE }}
+      is_release: true
 
 
     

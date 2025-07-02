@@ -7,6 +7,11 @@ on:
         type: string
         required: true
         description: The OBS project to commit changes to.
+      is_release:
+        type: boolean
+        required: true
+        default: false
+        description: Boolean to indicate if the job is triggered by a release event.
     secrets:
       OBS_USER:
         required: true
@@ -15,6 +20,7 @@ on:
 
 env:
   OBS_PROJECT: ${{ inputs.obs_project }}
+  IS_RELEASE: ${{ inputs.is_release }}
   OBS_USER: ${{ secrets.OBS_USER }}
   OBS_PASS: ${{ secrets.OBS_PASSWORD }}
   AUTHOR_EMAIL: trento-developers@suse.com
@@ -43,7 +49,6 @@ jobs:
         run: |
           git config --global --add safe.directory /__w/support/support
           VERSION=$(/scripts/get_version_from_git.sh)
-          echo $VERSION
           PACKAGE_FOLDER=$FOLDER/$PACKAGE
           sed -i 's~%%REVISION%%~${{ github.sha }}~' $PACKAGE_FOLDER/_service && \
           sed -i 's~%%VERSION%%~'"${VERSION}"'~' $PACKAGE_FOLDER/_service
@@ -85,7 +90,7 @@ jobs:
 
           echo "Detected latest SemVer tag: $LATEST_TAG"
       - name: Prepare .changes file
-        if: github.event_name == 'release'
+        if: ${{ env.IS_RELEASE }}
         run: |
           CHANGES_FILE=${PACKAGE}.changes
           TAG=${{ steps.latest-tag.outputs.tag }}
