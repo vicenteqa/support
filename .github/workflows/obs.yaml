@@ -62,7 +62,7 @@ jobs:
           pushd $DEST_FOLDER
           osc service manualrun
       - name: Get Latest SemVer Tag from Git
-        if: github.event_name == 'release'
+        if: ${{ env.IS_RELEASE }}
         id: latest-tag
         run: |
           git config --global --add safe.directory /__w/support/support
