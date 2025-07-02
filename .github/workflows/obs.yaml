@@ -43,6 +43,7 @@ jobs:
         run: |
           git config --global --add safe.directory /__w/support/support
           VERSION=$(/scripts/get_version_from_git.sh)
+          echo $PACKAGE
           PACKAGE_FOLDER=$FOLDER/$PACKAGE
           sed -i 's~%%REVISION%%~${{ github.sha }}~' $PACKAGE_FOLDER/_service && \
           sed -i 's~%%VERSION%%~'"${VERSION}"'~' $PACKAGE_FOLDER/_service
