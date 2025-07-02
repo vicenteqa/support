@@ -62,7 +62,7 @@ jobs:
           pushd $DEST_FOLDER
           osc service manualrun
       - name: Get Latest SemVer Tag from Git
-        if: ${{ env.IS_RELEASE }}
+        if: ${{ env.IS_RELEASE == 'true' }}
         id: latest-tag
         run: |
           git config --global --add safe.directory /__w/support/support
@@ -90,7 +90,7 @@ jobs:
 
           echo "Detected latest SemVer tag: $LATEST_TAG"
       - name: Prepare .changes file
-        if: ${{ env.IS_RELEASE }}
+        if: ${{ env.IS_RELEASE == 'true' }}
         run: |
           CHANGES_FILE=${PACKAGE}.changes
           TAG=${{ steps.latest-tag.outputs.tag }}
