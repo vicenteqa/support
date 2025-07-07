@@ -66,28 +66,17 @@ jobs:
         id: latest-tag
         run: |
           git config --global --add safe.directory /__w/support/support
-          # Exit immediately if a command exits with a non-zero status.
           set -e
-          # Exit if any command in a pipeline fails.
           set -o pipefail
-
-          # Regular expression for Semantic Versioning (SemVer)
-          # From https://semver.org/#is-there-a-suggested-regular-expression-regex-to-check-a-semver-string
           SEMVER_REGEX="^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$"
-
-          # Find all tags, filter for SemVer, sort versionally, and get the last one.
-          # The sed '/-/!{s/$/_/}' and 's/_$//' trick helps sort pre-release tags correctly.
           LATEST_TAG=$(git tag | grep -P "$SEMVER_REGEX" | sed '/-/!{s/$/_/}' | sort -V | sed 's/_$//' | tail -n1)
 
-          # If no SemVer tag is found, use initial_version (0.0.1 as per your original action config)
           if [ -z "${LATEST_TAG}" ]; then
             echo "No SemVer tag found. Using initial_version: 0.0.1"
             LATEST_TAG="0.0.1"
           fi
 
-          # Output the tag so subsequent steps can use it.
           echo "tag=$LATEST_TAG" >> "$GITHUB_OUTPUT"
-
           echo "Detected latest SemVer tag: $LATEST_TAG"
       - name: Prepare .changes file
         if: ${{ env.IS_RELEASE == 'true' }}
