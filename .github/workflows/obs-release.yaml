@@ -57,7 +57,7 @@ jobs:
       contents: write
     runs-on: ubuntu-24.04
     outputs:
-      version: ${{ steps.publish-release.outputs.version_tag }}
+      version: ${{ steps.publish-release.outputs.version }}
     needs:
       - pre-release
     steps:
