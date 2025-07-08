@@ -79,7 +79,7 @@ jobs:
     secrets: inherit
     with:
       obs_project: ${{ vars.OBS_PROJECT_STABLE }}
-      is_release: true
+      version_tag: ${{ needs.pre-release.outputs.version }}
 
 
     
