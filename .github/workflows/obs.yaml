@@ -7,11 +7,10 @@ on:
         type: string
         required: true
         description: The OBS project to commit changes to.
-      is_release:
-        type: boolean
-        required: true
-        default: false
-        description: Boolean to indicate if the job is triggered by a release event.
+      version_tag:
+        type: string
+        required: false
+        description: Latest version tag
     secrets:
       OBS_USER:
         required: true
@@ -20,7 +19,7 @@ on:
 
 env:
   OBS_PROJECT: ${{ inputs.obs_project }}
-  IS_RELEASE: ${{ inputs.is_release }}
+  VERSION_TAG: ${{ inputs.version_tag }}
   OBS_USER: ${{ secrets.OBS_USER }}
   OBS_PASS: ${{ secrets.OBS_PASSWORD }}
   AUTHOR_EMAIL: trento-developers@suse.com
@@ -49,6 +48,7 @@ jobs:
         run: |
           git config --global --add safe.directory /__w/support/support
           VERSION=$(/scripts/get_version_from_git.sh)
+          echo $VERSION
           PACKAGE_FOLDER=$FOLDER/$PACKAGE
           sed -i 's~%%REVISION%%~${{ github.sha }}~' $PACKAGE_FOLDER/_service && \
           sed -i 's~%%VERSION%%~'"${VERSION}"'~' $PACKAGE_FOLDER/_service
@@ -61,28 +61,11 @@ jobs:
           rm -fv $DEST_FOLDER/*.tar.gz
           pushd $DEST_FOLDER
           osc service manualrun
-      - name: Get Latest SemVer Tag from Git
-        if: ${{ env.IS_RELEASE == 'true' }}
-        id: latest-tag
-        run: |
-          git config --global --add safe.directory /__w/support/support
-          set -e
-          set -o pipefail
-          SEMVER_REGEX="^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$"
-          LATEST_TAG=$(git tag | grep -P "$SEMVER_REGEX" | sed '/-/!{s/$/_/}' | sort -V | sed 's/_$//' | tail -n1)
-
-          if [ -z "${LATEST_TAG}" ]; then
-            echo "No SemVer tag found. Using initial_version: 0.0.1"
-            LATEST_TAG="0.0.1"
-          fi
-
-          echo "tag=$LATEST_TAG" >> "$GITHUB_OUTPUT"
-          echo "Detected latest SemVer tag: $LATEST_TAG"
       - name: Prepare .changes file
-        if: ${{ env.IS_RELEASE == 'true' }}
+        if: ${{ env.VERSION_TAG }}
         run: |
           CHANGES_FILE=${PACKAGE}.changes
-          TAG=${{ steps.latest-tag.outputs.tag }}
+          TAG=${{ env.VERSION_TAG }}
           /scripts/gh_release_to_obs_changeset.py ${{ github.repository }} -a vicente.ruiz@suse.com -t "$TAG" -f "$DEST_FOLDER/$CHANGES_FILE"
       - name: Commit on OBS
         run: |
