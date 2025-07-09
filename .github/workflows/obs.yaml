@@ -21,6 +21,8 @@ on:
       OBS_PASSWORD:
         required: true
 
+env:
+  VERSION_TAG: ${{ inputs.version_tag }}
 
 jobs:
   obs-commit:
@@ -29,7 +31,6 @@ jobs:
     container:
       image: ghcr.io/trento-project/continuous-delivery:main
       env:
-        VERSION_TAG: ${{ inputs.version_tag }}
         DEST_FOLDER: "/tmp/osc_project"
         FOLDER: packaging/suse
         PACKAGE: supportutils-plugin-trento
