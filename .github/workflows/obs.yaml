@@ -9,8 +9,12 @@ on:
         description: The OBS project to commit changes to.
       version_tag:
         type: string
-        required: false
+        required: true
         description: Latest version tag
+      is_release:
+        type: boolean
+        required: true
+        description: Boolean that indicates if it's a stable release tag.
     secrets:
       OBS_USER:
         required: true
@@ -25,6 +29,7 @@ jobs:
     container:
       image: ghcr.io/trento-project/continuous-delivery:main
       env:
+        VERSION_TAG: ${{ inputs.version_tag }}
         DEST_FOLDER: "/tmp/osc_project"
         FOLDER: packaging/suse
         PACKAGE: supportutils-plugin-trento
@@ -43,9 +48,10 @@ jobs:
           cp /home/osc/.config/osc/oscrc $HOME/.config/osc
           /scripts/init_osc_creds.sh
       - name: Prepare _service file with version details
+      
         run: |
           git config --global --add safe.directory /__w/support/support
-          VERSION=$(/scripts/get_version_from_git.sh)
+          VERSION=${{ env.VERSION_TAG }}
           PACKAGE_FOLDER=$FOLDER/$PACKAGE
           sed -i 's~%%REVISION%%~${{ github.sha }}~' $PACKAGE_FOLDER/_service && \
           sed -i 's~%%VERSION%%~'"${VERSION}"'~' $PACKAGE_FOLDER/_service
@@ -63,8 +69,8 @@ jobs:
       - name: Prepare .changes file
         env:
           AUTHOR_EMAIL: trento-developers@suse.com
-          VERSION_TAG: ${{ inputs.VERSION_TAG }}
-        if: ${{ env.VERSION_TAG }}
+          IS_RELEASE: ${{ inputs.is_release }}
+        if: ${{ env.IS_RELEASE }}
         run: |
           CHANGES_FILE=${PACKAGE}.changes
           TAG=${{ env.VERSION_TAG }}

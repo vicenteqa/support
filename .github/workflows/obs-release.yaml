@@ -80,3 +80,4 @@ jobs:
     with:
       obs_project: ${{ vars.OBS_PROJECT_STABLE }}
       version_tag: ${{ needs.release.outputs.version_tag }}
+      is_release: true
