@@ -18,6 +18,8 @@ jobs:
     container:
       image: ghcr.io/trento-project/continuous-delivery:main
       options: -u 0:0
+    outputs:
+      version_output: ${{ steps.get-rolling-version.outputs.version }}       
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
