@@ -16,7 +16,8 @@ jobs:
     name: Get rolling version tag
     runs-on: ubuntu-24.04    
     container:
-      image: ghcr.io/trento-project/continuous-delivery:main    
+      image: ghcr.io/trento-project/continuous-delivery:main
+      options: -u 0:0
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
