@@ -71,6 +71,12 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+  debug:
+    name: debug version value
+    runs-on: ubuntu-24.04
+    steps:
+      - run: echo ${{ needs.release.outputs.version }}
+
   obs-release:
     name: Update OBS package
     uses: ./.github/workflows/obs.yaml
