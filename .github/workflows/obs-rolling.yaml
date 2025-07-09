@@ -34,6 +34,8 @@ jobs:
   debug-rolling-version:
     runs-on: ubuntu-24.04    
     name: Debug rolling version
+    needs: 
+      - get-rolling-version
     steps:
     - run: echo ${{ needs.get-rolling-version.outputs.version }}        
 
