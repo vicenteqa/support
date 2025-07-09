@@ -61,6 +61,7 @@ jobs:
     needs:
       - pre-release
     steps:
+      - run: echo ${{ needs.pre-release.outputs.version }}
       - name: Publish release
         id: publish-release
         uses: release-drafter/release-drafter@v6
