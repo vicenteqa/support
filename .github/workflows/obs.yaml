@@ -16,9 +16,7 @@ on:
         required: true
       OBS_PASSWORD:
         required: true
-env:
-  OBS_USER: ${{ secrets.OBS_USER }}
-  OBS_PASS: ${{ secrets.OBS_PASSWORD }}
+
 
 jobs:
   obs-commit:
@@ -37,6 +35,9 @@ jobs:
         with:
           fetch-depth: 0
       - name: Configure OSC
+        env:
+          OBS_USER: ${{ secrets.OBS_USER }}
+          OBS_PASS: ${{ secrets.OBS_PASSWORD }}
         run: |
           mkdir -p $HOME/.config/osc
           cp /home/osc/.config/osc/oscrc $HOME/.config/osc
