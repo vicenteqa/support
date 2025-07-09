@@ -35,6 +35,7 @@ jobs:
         PACKAGE: supportutils-plugin-trento
       options: -u 0:0
     steps:
+      - run: echo ${{ env.VERSION_TAG}}
       - name: Checkout
         uses: actions/checkout@v4
         with:
@@ -51,7 +52,6 @@ jobs:
         run: |
           git config --global --add safe.directory /__w/support/support
           VERSION=${{ env.VERSION_TAG }}
-          echo $VERSION
           PACKAGE_FOLDER=$FOLDER/$PACKAGE
           sed -i 's~%%REVISION%%~${{ github.sha }}~' $PACKAGE_FOLDER/_service && \
           sed -i 's~%%VERSION%%~'"${VERSION}"'~' $PACKAGE_FOLDER/_service
