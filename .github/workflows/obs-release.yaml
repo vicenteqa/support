@@ -25,12 +25,10 @@ jobs:
         with:
           fetch-depth: 2
           ssh-key: ${{ secrets.RELEASE_KEY }}
-
       - name: Check if there is a parent commit
         id: check-parent-commit
         run: |
           echo "sha=$(git rev-parse --verify --quiet HEAD^)" >> $GITHUB_OUTPUT
-
       - name: Detect new version
         id: detect-version
         if: steps.check-parent-commit.outputs.sha
@@ -57,7 +55,7 @@ jobs:
       contents: write
     runs-on: ubuntu-24.04
     outputs:
-      version: ${{ steps.release.outputs.version }}
+      version: ${{ steps.publish-release.outputs.version }}
     needs:
       - pre-release
     steps:
@@ -82,6 +80,3 @@ jobs:
     with:
       obs_project: ${{ vars.OBS_PROJECT_STABLE }}
       version_tag: ${{ needs.release.outputs.version }}
-
-
-    
