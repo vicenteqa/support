@@ -73,6 +73,8 @@ jobs:
 
   debug:
     name: debug version value
+    needs:
+      - release
     runs-on: ubuntu-24.04
     steps:
       - run: echo ${{ needs.release.outputs.version }}
