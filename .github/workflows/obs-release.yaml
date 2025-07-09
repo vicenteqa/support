@@ -55,7 +55,7 @@ jobs:
       contents: write
     runs-on: ubuntu-24.04
     outputs:
-      version: ${{ steps.publish-release.outputs.tag_name }}
+      version_tag: ${{ steps.publish-release.outputs.tag_name }}
     needs:
       - pre-release
     steps:
@@ -79,4 +79,4 @@ jobs:
     secrets: inherit
     with:
       obs_project: ${{ vars.OBS_PROJECT_STABLE }}
-      version_tag: ${{ needs.release.outputs.version }}
+      version_tag: ${{ needs.release.outputs.version_tag }}

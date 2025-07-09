@@ -17,13 +17,6 @@ on:
       OBS_PASSWORD:
         required: true
 
-env:
-  OBS_PROJECT: ${{ inputs.obs_project }}
-  VERSION_TAG: ${{ inputs.version_tag }}
-  OBS_USER: ${{ secrets.OBS_USER }}
-  OBS_PASS: ${{ secrets.OBS_PASSWORD }}
-  AUTHOR_EMAIL: trento-developers@suse.com
-
 jobs:
   obs-commit:
     name: Commit to OBS
@@ -31,6 +24,8 @@ jobs:
     container:
       image: ghcr.io/trento-project/continuous-delivery:main
       env:
+        OBS_USER: ${{ secrets.OBS_USER }}
+        OBS_PASS: ${{ secrets.OBS_PASS }}
         DEST_FOLDER: "/tmp/osc_project"
         FOLDER: packaging/suse
         PACKAGE: supportutils-plugin-trento
@@ -49,11 +44,12 @@ jobs:
         run: |
           git config --global --add safe.directory /__w/support/support
           VERSION=$(/scripts/get_version_from_git.sh)
-          echo ${{ env.VERSION_TAG }}
           PACKAGE_FOLDER=$FOLDER/$PACKAGE
           sed -i 's~%%REVISION%%~${{ github.sha }}~' $PACKAGE_FOLDER/_service && \
           sed -i 's~%%VERSION%%~'"${VERSION}"'~' $PACKAGE_FOLDER/_service
       - name: Prepare OBS package
+        env: 
+          OBS_PROJECT: ${{ inputs.obs_project }}
         run: |
           PACKAGE_FOLDER=$FOLDER/$PACKAGE
           osc checkout $OBS_PROJECT $PACKAGE -o $DEST_FOLDER
@@ -63,6 +59,9 @@ jobs:
           pushd $DEST_FOLDER
           osc service manualrun
       - name: Prepare .changes file
+        env:
+          AUTHOR_EMAIL: trento-developers@suse.com
+          VERSION_TAG: ${{ inputs.VERSION_TAG }}
         if: ${{ env.VERSION_TAG }}
         run: |
           CHANGES_FILE=${PACKAGE}.changes
