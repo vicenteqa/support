@@ -29,10 +29,7 @@ jobs:
         id: get-rolling-version
         run: |
           git config --global --add safe.directory "$GITHUB_WORKSPACE" 
-          ROLLING_VERSION=$(/scripts/get_version_from_git.sh) 
-          echo "Rolling version detected: $ROLLING_VERSION"
-          echo "version=$ROLLING_VERSION" >> "$GITHUB_OUTPUT"
-
+          echo "version=$(/scripts/get_version_from_git.sh)" >> "$GITHUB_OUTPUT" 
   debug-rolling-version:
     runs-on: ubuntu-24.04    
     name: Debug rolling version
