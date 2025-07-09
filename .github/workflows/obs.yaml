@@ -18,7 +18,7 @@ on:
         required: true
 env:
   OBS_USER: ${{ secrets.OBS_USER }}
-  OBS_PASS: ${{ secrets.OBS_PASS }}
+  OBS_PASS: ${{ secrets.OBS_PASSWORD }}
 
 jobs:
   obs-commit:
