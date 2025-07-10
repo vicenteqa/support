@@ -70,6 +70,12 @@ jobs:
           config-name: release_drafter.yaml
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  
+  exit-event:
+    name: exit
+    runs-on: ubuntu-24.04
+    steps:
+      - run: exit 1
 
   obs-release:
     name: Update OBS package
