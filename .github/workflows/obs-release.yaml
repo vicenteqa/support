@@ -1,0 +1,83 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "VERSION"
+  workflow_dispatch:
+    
+
+concurrency: ${{ github.workflow }}
+
+jobs:
+  pre-release:
+    name: Detect new version, draft release
+    permissions:
+      contents: write
+    runs-on: ubuntu-24.04
+    outputs:
+      version: ${{ steps.detect-version.outputs.current-version }}
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+          ssh-key: ${{ secrets.RELEASE_KEY }}
+      - name: Check if there is a parent commit
+        id: check-parent-commit
+        run: |
+          echo "sha=$(git rev-parse --verify --quiet HEAD^)" >> $GITHUB_OUTPUT
+      - name: Detect new version
+        id: detect-version
+        if: steps.check-parent-commit.outputs.sha
+        uses: salsify/action-detect-and-tag-new-version@v2
+        with:
+          create-tag: false
+          version-command: |
+            cat VERSION
+
+      - name: Draft release
+        id: draft-release
+        uses: release-drafter/release-drafter@v6
+        with:
+          publish: false
+          version: ${{ steps.detect-version.outputs.current-version }}
+          disable-autolabeler: true
+          config-name: release_drafter.yaml
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  release:
+    name: Tag and publish release
+    permissions:
+      contents: write
+    runs-on: ubuntu-24.04
+    outputs:
+      version_tag: ${{ steps.publish-release.outputs.tag_name }}
+    needs:
+      - pre-release
+    steps:
+      - name: Publish release
+        id: publish-release
+        uses: release-drafter/release-drafter@v6
+        with:
+          publish: true
+          tag: ${{ needs.pre-release.outputs.version }}
+          version: ${{ needs.pre-release.outputs.version }}
+          disable-autolabeler: true
+          config-name: release_drafter.yaml
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  obs-release:
+    name: Update OBS package
+    uses: ./.github/workflows/obs.yaml
+    needs:
+      - release
+    secrets: inherit
+    with:
+      obs_project: ${{ vars.OBS_PROJECT_STABLE }}
+      version_tag: ${{ needs.release.outputs.version_tag }}
+      is_release: true
