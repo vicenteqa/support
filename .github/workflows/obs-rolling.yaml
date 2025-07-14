@@ -1,4 +1,4 @@
-name: Continous Delivery to SUSE OBS Rolling Project
+name: CD to SUSE OBS Rolling
 concurrency: cd-obs-${{ github.ref }}
 on:
   push:
@@ -32,7 +32,7 @@ jobs:
 
   obs-sync:
     name: Update OBS package
-    uses: ./.github/workflows/obs.yaml
+    uses: ./.github/workflows/obs-sync.yaml
     needs:
       - get-rolling-version
     secrets: inherit
