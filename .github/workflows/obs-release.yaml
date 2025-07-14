@@ -89,6 +89,7 @@ jobs:
       - obs-release
     if: failure() && needs.obs-release.result == 'failure'
     steps:
+      - run: echo ${{ needs.release.outputs.version_tag }}
       - name: Delete GitHub Tag and Release
         uses: ClementTsang/delete-tag-and-release@v0.4.0
         with:
