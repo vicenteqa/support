@@ -81,3 +81,30 @@ jobs:
       obs_project: ${{ vars.OBS_PROJECT_STABLE }}
       version_tag: ${{ needs.release.outputs.version_tag }}
       is_release: true
+
+  rollback-on-failure:
+    name: Revert release and tag creation in case of failure of obs-sync
+    runs-on: ubuntu-24.04
+    needs:
+      - obs-release
+    if: failure() && needs.obs-release.result == 'failure'
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 
+          ssh-key: ${{ secrets.RELEASE_KEY }} 
+      - name: Get release info
+        id: get-release-info
+        run: echo "tag_name=${{ needs.release.outputs.version_tag }}" >> $GITHUB_OUTPUT
+      - name: Delete release from Github
+        if: steps.get-release-info.outputs.release_id
+        uses: octokit/action-delete-release@v1
+        with:
+          release_id: ${{ steps.get-release-info.outputs.release_id }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Delete Git tag
+        run: git push origin --delete ${{ steps.get-release-info.outputs.tag_name }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
