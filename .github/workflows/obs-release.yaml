@@ -58,7 +58,7 @@ jobs:
         uses: stefanzweifel/git-auto-commit-action@v6
         with:
           branch: main
-          commit_message: "Automatically update CHANGELOG.md for release ${{ steps.detect-version.outputs.current-version }}"          
+          commit_message: "Automatically update CHANGELOG.md for release ${{ steps.detect-version.outputs.current-version }} [skip ci]"          
 
   release:
     name: Tag and publish release
