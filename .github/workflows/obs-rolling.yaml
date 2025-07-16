@@ -14,8 +14,6 @@ jobs:
   obs-release:
     name: Update OBS package
     uses: ./.github/workflows/obs-sync.yaml
-    needs:
-      - release
     secrets: inherit
     with:
       update_changelog: false
