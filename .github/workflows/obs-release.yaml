@@ -58,7 +58,7 @@ jobs:
         uses: stefanzweifel/git-auto-commit-action@v6
         with:
           branch: main
-          commit_message: "Automatically update CHANGELOG.md for release ${{ steps.detect-version.outputs.current-version }} [skip ci]"          
+          commit_message: "Automatically update CHANGELOG.md for release ${{ steps.detect-version.outputs.current-version }}"          
 
   release:
     name: Tag and publish release
@@ -89,9 +89,7 @@ jobs:
       - release
     secrets: inherit
     with:
-      obs_project: ${{ vars.OBS_PROJECT_STABLE }}
-      version_tag: ${{ needs.release.outputs.version_tag }}
-      is_release: true
+      update_changelog: true
 
   rollback-on-failure:
     name: Rollback release if OBS update fails

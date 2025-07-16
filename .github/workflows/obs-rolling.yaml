@@ -11,32 +11,11 @@ on:
   workflow_dispatch:
 
 jobs:        
-  get-rolling-version:
-    name: Get rolling version tag
-    runs-on: ubuntu-24.04    
-    container:
-      image: ghcr.io/trento-project/continuous-delivery:main
-      options: -u 0:0
-    outputs:
-      version: ${{ steps.get-rolling-version-from-script.outputs.version }}       
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0 
-      - name: Get Rolling Version
-        id: get-rolling-version-from-script
-        run: |
-          git config --global --add safe.directory "$GITHUB_WORKSPACE" 
-          echo "version=$(/scripts/get_version_from_git.sh)" >> "$GITHUB_OUTPUT"    
-
-  obs-sync:
+  obs-release:
     name: Update OBS package
     uses: ./.github/workflows/obs-sync.yaml
     needs:
-      - get-rolling-version
+      - release
     secrets: inherit
     with:
-      obs_project: ${{ vars.OBS_PROJECT_ROLLING }}
-      version_tag: ${{ needs.get-rolling-version.outputs.version }}
-      is_release: false
+      update_changelog: false
