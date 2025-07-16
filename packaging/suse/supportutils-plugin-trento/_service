@@ -1,6 +1,6 @@
 <services>
     <service name="tar_scm" mode="manual">
-        <param name="url">https://github.com/trento-project/support.git</param>
+        <param name="url">https://github.com/vicenteqa/support.git</param>
         <param name="scm">git</param>
         <param name="filename">supportutils-plugin-trento</param>
         <param name="revision">%%REVISION%%</param>
