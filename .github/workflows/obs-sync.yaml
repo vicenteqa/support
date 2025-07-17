@@ -66,8 +66,6 @@ jobs:
     needs:
       - get-stable-version
       - get-rolling-version
-    # This condition ensures the job runs even if 'get-stable-version' is skipped.
-    # It checks if either 'get-rolling-version' succeeded OR 'get-stable-version' was skipped.
     if: |
       always() && (
         needs.get-rolling-version.result == 'success' ||
