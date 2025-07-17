@@ -19,6 +19,7 @@ jobs:
     runs-on: ubuntu-24.04
     outputs:
       version: ${{ steps.detect-version.outputs.current-version }}
+      changelog_body: ${{ steps.draft-release.outputs.body }}
     steps:
       - name: Check out the repository
         uses: actions/checkout@v4
@@ -37,7 +38,6 @@ jobs:
           create-tag: false
           version-command: |
             cat VERSION
-
       - name: Draft release
         id: draft-release
         uses: release-drafter/release-drafter@v6
@@ -98,7 +98,7 @@ jobs:
       contents: write
     needs: 
       - obs-sync-release
-      - draft-release
+      - pre-release
     if: needs.obs-sync-release.result == 'success'
     runs-on: ubuntu-24.04
     steps:
@@ -109,8 +109,8 @@ jobs:
     - name: Update CHANGELOG.md
       uses: stefanzweifel/changelog-updater-action@v1
       with:
-        latest-version: ${{ needs.draft-release.outputs.tag_name }}
-        release-notes: ${{ needs.draft-release.outputs.body }}
+        latest-version: ${{ needs.pre-release.outputs.version }}
+        release-notes: ${{ needs.pre-release.outputs.body }}
     - name: Commit new changelog
       uses: stefanzweifel/git-auto-commit-action@v6
       with:
