@@ -90,7 +90,7 @@ jobs:
     secrets: inherit
     with:
       update_changelog: true
-      obs_project: ${{ env.OBS_PROJECT_STABLE }}
+      obs_project: ${{ vars.OBS_PROJECT_STABLE }}
 
   obs-rolling:
     name: Update OBS package
@@ -100,7 +100,7 @@ jobs:
     secrets: inherit
     with:
       update_changelog: false      
-      obs_project: ${{ env.OBS_PROJECT_ROLLING }}
+      obs_project: ${{ vars.OBS_PROJECT_ROLLING }}
   rollback-on-failure:
     name: Rollback release if OBS update fails
     runs-on: ubuntu-24.04
