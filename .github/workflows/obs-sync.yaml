@@ -21,20 +21,20 @@ on:
 concurrency: ${{ github.workflow }}-${{ inputs.obs_project }}
 
 
-env:
-  PACKAGE: supportutils-plugin-trento
-  FOLDER: packaging/suse
-  OBS_PROJECT: ${{ inputs.obs_project }}
-  AUTHOR_EMAIL: trento-developers@suse.com
+
+
 jobs:
- 
   obs-commit:
     name: Commit to OBS project ${{ matrix.obs_project_target }}
     runs-on: ubuntu-24.04
     container:
       image: ghcr.io/trento-project/continuous-delivery:main
       env:
+        OBS_PROJECT: ${{ inputs.obs_project }}
+        AUTHOR_EMAIL: trento-developers@suse.com
         DEST_FOLDER: "/tmp/osc_project"
+        FOLDER: packaging/suse
+        PACKAGE: supportutils-plugin-trento
       options: -u 0:0
     steps:
       - name: Checkout
@@ -44,27 +44,35 @@ jobs:
       - name: Configure OSC
         env:
           OBS_USER: ${{ secrets.OBS_USER }}
-          OBS_PASS: ${{ secrets.OBS_PASS }}
+          OBS_PASS: ${{ secrets.OBS_PASS }}          
         run: |
           mkdir -p $HOME/.config/osc
           cp /home/osc/.config/osc/oscrc $HOME/.config/osc
           /scripts/init_osc_creds.sh
-      - name: Prepare _service file
+      - name: Prepare _service file with version details
         run: |
           git config --global --add safe.directory /__w/support/support
           VERSION=$(/scripts/get_version_from_git.sh)
           PACKAGE_FOLDER=$FOLDER/$PACKAGE
           sed -i 's~%%REVISION%%~${{ github.sha }}~' $PACKAGE_FOLDER/_service && \
           sed -i 's~%%VERSION%%~'"${VERSION}"'~' $PACKAGE_FOLDER/_service
-      - name: Prepare .changes file
-        if: inputs.update_changelog
+      - name: Prepare OBS package
         env:
-          GITHUB_OAUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          OBS_PROJECT: ${{ vars.OBS_PROJECT }}
         run: |
-          VERSION=${{ steps.get_version_from_git.outputs.version }}
-          REPOSITORY=${{ github.repository }}
-          CHANGES_FILE=${OBS_PACKAGE_NAME}.changes
-          /scripts/gh_release_to_obs_changeset.py $REPOSITORY -a $AUTHOR_EMAIL -t $VERSION -f $CHECKOUT_DIR/$CHANGES_FILE
+          PACKAGE_FOLDER=$FOLDER/$PACKAGE
+          osc checkout $OBS_PROJECT $PACKAGE -o $DEST_FOLDER
+          cp $PACKAGE_FOLDER/_service $DEST_FOLDER
+          cp $PACKAGE_FOLDER/${PACKAGE}.spec $DEST_FOLDER
+          rm -fv $DEST_FOLDER/*.tar.gz
+          pushd $DEST_FOLDER
+          osc service manualrun
+      - name: Prepare .changes file
+        if: github.event_name == 'release'
+        run: |
+          CHANGES_FILE=${PACKAGE}.changes
+          TAG=${{ steps.latest-tag.outputs.tag }}
+          /scripts/gh_release_to_obs_changeset.py ${{ github.repository }} -a trento-developers@suse.com -t $TAG -f $DEST_FOLDER/$CHANGES_FILE
       - name: Commit on OBS
         run: |
           pushd $DEST_FOLDER
