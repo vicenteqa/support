@@ -102,18 +102,3 @@ jobs:
       update_changelog: false      
       obs_project: ${{ vars.OBS_PROJECT_ROLLING }}
 
-  rollback-on-failure:
-    name: Rollback release if OBS update fails
-    runs-on: ubuntu-24.04
-    needs:
-      - obs-sync-release
-    if: failure() && needs.obs-sync-release.result == 'failure'
-    steps:
-      - run: echo ${{ needs.release.outputs.version_tag }}
-      - name: Delete GitHub Tag and Release
-        uses: ClementTsang/delete-tag-and-release@v0.4.0
-        with:
-          tag_name: ${{ needs.release.outputs.version_tag }}
-          delete_release: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -33,6 +33,8 @@ jobs:
         FOLDER: packaging/suse
         PACKAGE: supportutils-plugin-trento
       options: -u 0:0
+    outputs:
+      version: ${{ steps.get_version_details.outputs.version }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -47,9 +49,12 @@ jobs:
           cp /home/osc/.config/osc/oscrc $HOME/.config/osc
           /scripts/init_osc_creds.sh
       - name: Prepare _service file with version details
+        id: get_version_details
         run: |
           git config --global --add safe.directory /__w/support/support
           VERSION=$(/scripts/get_version_from_git.sh)
+          echo "Determined version: $VERSION"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
           PACKAGE_FOLDER=$FOLDER/$PACKAGE
           sed -i 's~%%REVISION%%~${{ github.sha }}~' $PACKAGE_FOLDER/_service && \
           sed -i 's~%%VERSION%%~'"${VERSION}"'~' $PACKAGE_FOLDER/_service
@@ -65,7 +70,7 @@ jobs:
           pushd $DEST_FOLDER
           osc service manualrun
       - name: Prepare .changes file
-        if: github.event_name == 'release'
+        if: inputs.update_changelog == 'true'
         run: |
           CHANGES_FILE=${PACKAGE}.changes
           TAG=${{ steps.latest-tag.outputs.tag }}
@@ -75,3 +80,18 @@ jobs:
           pushd $DEST_FOLDER
           osc ar
           osc commit -m "GitHub Actions automated update to reference ${{ github.sha }}"
+
+  rollback-on-failure:
+    name: Rollback release if OBS update fails
+    runs-on: ubuntu-24.04
+    needs:
+      - obs-commit
+    if: always() && needs.obs-commit.result == 'failure' && inputs.update_changelog == true    
+    steps:
+      - name: Delete GitHub Tag and Release
+        uses: ClementTsang/delete-tag-and-release@v0.4.0
+        with:
+          tag_name: ${{ needs.obs-commit.outputs.version }}
+          delete_release: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}          
