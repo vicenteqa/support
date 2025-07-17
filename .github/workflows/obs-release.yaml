@@ -110,7 +110,7 @@ jobs:
       uses: stefanzweifel/changelog-updater-action@v1
       with:
         latest-version: ${{ needs.pre-release.outputs.version }}
-        release-notes: ${{ needs.pre-release.outputs.body }}
+        release-notes: ${{ needs.pre-release.outputs.changelog_body }}
     - name: Commit new changelog
       uses: stefanzweifel/git-auto-commit-action@v6
       with:
