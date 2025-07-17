@@ -107,8 +107,7 @@ jobs:
     runs-on: ubuntu-24.04
     needs:
       - obs-sync-release
-      - release
-    if: failure() && needs.obs-release.result == 'failure'
+    if: failure() && needs.obs-sync-release.result == 'failure'
     steps:
       - run: echo ${{ needs.release.outputs.version_tag }}
       - name: Delete GitHub Tag and Release
