@@ -8,106 +8,29 @@ on:
         required: false
         default: false
         description: Boolean that indicates if the .changes (changelog) file should be updated.
+      obs_project:
+        type: string
+        required: true
+        description: The OBS project to commit changes to.    
     secrets:
       OBS_USER:
         required: true
       OBS_PASS:
         required: true
 
+concurrency: ${{ github.workflow }}-${{ inputs.obs_project }}
+
+
 env:
   PACKAGE: supportutils-plugin-trento
   FOLDER: packaging/suse
+  OBS_PROJECT: ${{ inputs.obs_project }}
+  AUTHOR_EMAIL: trento-developers@suse.com
 jobs:
-  get-stable-version:
-    name: Get Stable Version
-    runs-on: ubuntu-latest
-    if: ${{ inputs.update_changelog == true }}
-    outputs:
-      version: ${{ steps.get_stable_version.outputs.version }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Get latest stable version tag
-        id: get_stable_version
-        run: |
-          VERSION=$(git describe --tags --abbrev=0 --match "v[0-9]*.[0-9]*.[0-9]*" 2>/dev/null | sed 's/^v//')
-          if [ -z "$VERSION" ]; then
-            VERSION="0.0.0"
-          fi
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-
-  get-rolling-version:
-    name: Get Rolling Version
-    runs-on: ubuntu-latest
-    container:
-      image: ghcr.io/trento-project/continuous-delivery:main
-      options: -u 0:0
-    outputs:
-      version: ${{ steps.get_rolling_version.outputs.version }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Get Rolling Version from script
-        id: get_rolling_version
-        run: |
-          git config --global --add safe.directory "$GITHUB_WORKSPACE"
-          ROLLING_VERSION=$(/scripts/get_version_from_git.sh)
-          echo "version=$ROLLING_VERSION" >> "$GITHUB_OUTPUT"
-
-  get-obs-projects:
-    name: Determine OBS Projects to Build
-    runs-on: ubuntu-latest
-    needs:
-      - get-stable-version
-      - get-rolling-version
-    if: |
-      always() && (
-        needs.get-rolling-version.result == 'success' ||
-        needs.get-stable-version.result == 'skipped' ||
-        needs.get-stable-version.result == 'success'
-      )
-    outputs:
-      stable_version: ${{ steps.set_versions.outputs.stable_version }}
-      rolling_version: ${{ needs.get-rolling-version.outputs.version }}
-      obs_projects_json: ${{ steps.set_obs_projects.outputs.obs_projects }}
-    steps:
-      - name: Set versions for downstream jobs
-        id: set_versions
-        run: |
-          STABLE_VERSION=""
-          if [ "${{ needs.get-stable-version.result }}" == "success" ]; then
-            STABLE_VERSION="${{ needs.get-stable-version.outputs.version }}"
-          fi
-          echo "stable_version=$STABLE_VERSION" >> $GITHUB_OUTPUT
-
-      - name: Set OBS projects for matrix
-        id: set_obs_projects
-        env:
-          UPDATE_CHANGELOG: ${{ inputs.update_changelog }}
-          OBS_PROJECT_STABLE: ${{ vars.OBS_PROJECT_STABLE }}
-          OBS_PROJECT_ROLLING: ${{ vars.OBS_PROJECT_ROLLING }}
-        run: |
-          OBS_PROJECTS_TO_BUILD='["${{ env.OBS_PROJECT_ROLLING }}"]'
-          if [[ "${{ env.UPDATE_CHANGELOG }}" == "true" ]]; then
-            OBS_PROJECTS_TO_BUILD='["${{ env.OBS_PROJECT_STABLE }}", "${{ env.OBS_PROJECT_ROLLING }}"]'
-          fi
-          echo "obs_projects=$OBS_PROJECTS_TO_BUILD" >> $GITHUB_OUTPUT
-
+ 
   obs-commit:
     name: Commit to OBS project ${{ matrix.obs_project_target }}
     runs-on: ubuntu-24.04
-    needs: get-obs-projects
-    if: always()
-    strategy:
-      fail-fast: false
-      matrix:
-        obs_project_target: ${{ fromJson(needs.get-obs-projects.outputs.obs_projects_json) }}
     container:
       image: ghcr.io/trento-project/continuous-delivery:main
       env:
@@ -126,52 +49,32 @@ jobs:
           mkdir -p $HOME/.config/osc
           cp /home/osc/.config/osc/oscrc $HOME/.config/osc
           /scripts/init_osc_creds.sh
-      
-      - name: Prepare _service file with correct version details
+      - name: Prepare _service file
         run: |
-          git config --global --add safe.directory /__w/support/support
-          PACKAGE_FOLDER=${{ env.FOLDER }}/${{ env.PACKAGE }}
-          TARGET_PROJECT="${{ matrix.obs_project_target }}"
-          
-          STABLE_VERSION="${{ needs.get-obs-projects.outputs.stable_version }}"
-          ROLLING_VERSION="${{ needs.get-obs-projects.outputs.rolling_version }}"
-          
-          VERSION_TO_USE=""
-          if [[ "$TARGET_PROJECT" == "${{ vars.OBS_PROJECT_STABLE }}" ]]; then
-            VERSION_TO_USE="$STABLE_VERSION"
-          else
-            VERSION_TO_USE="$ROLLING_VERSION"
-          fi
-          
-          sed -i 's~%%REVISION%%~${{ github.sha }}~' "$PACKAGE_FOLDER/_service" && \
-          sed -i 's~%%VERSION%%~'"${VERSION_TO_USE}"'~' "$PACKAGE_FOLDER/_service"
-
-      - name: Prepare OBS package
-        env:
-          OBS_PROJECT: ${{ matrix.obs_project_target }}
-        run: |
-          PACKAGE_FOLDER=${{ env.FOLDER }}/${{ env.PACKAGE }}
-          osc checkout $OBS_PROJECT ${{ env.PACKAGE }} -o $DEST_FOLDER
-          cp "$PACKAGE_FOLDER/_service" "$DEST_FOLDER"
-          cp "$PACKAGE_FOLDER/${{ env.PACKAGE }}.spec" "$DEST_FOLDER"
-          rm -fv "$DEST_FOLDER"/*.tar.gz
-          pushd "$DEST_FOLDER"
-          osc service manualrun
-          popd
-
+          sed -i 's~%%REVISION%%~${{ github.sha }}~' $SOURCE_DIR/_service && \
+          sed -i 's~%%REPOSITORY%%~${{ github.repository }}~' $SOURCE_DIR/_service && \
+          sed -i 's~%%VERSION%%~${{ steps.get_version_from_git.outputs.version }}~' $SOURCE_DIR/_service
       - name: Prepare .changes file
+        if: inputs.update_changelog
         env:
-          AUTHOR_EMAIL: trento-developers@suse.com
-          UPDATE_CHANGELOG: ${{ inputs.update_changelog }}
-          OBS_PROJECT_STABLE: ${{ vars.OBS_PROJECT_STABLE }}
-        if: ${{ env.UPDATE_CHANGELOG == 'true' && matrix.obs_project_target == env.OBS_PROJECT_STABLE }}
+          GITHUB_OAUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          CHANGES_FILE="${{ env.PACKAGE }}.changes"
-          TAG="${{ needs.get-obs-projects.outputs.stable_version }}"
-          /scripts/gh_release_to_obs_changeset.py ${{ github.repository }} -a ${{ env.AUTHOR_EMAIL }} -t "$TAG" -f "$DEST_FOLDER/$CHANGES_FILE"
-      
-      - name: Commit on OBS
+          VERSION=${{ steps.get_version_from_git.outputs.version }}
+          REPOSITORY=${{ github.repository }}
+          CHANGES_FILE=${OBS_PACKAGE_NAME}.changes
+          /scripts/gh_release_to_obs_changeset.py $REPOSITORY -a $AUTHOR_EMAIL -t $VERSION -f $CHECKOUT_DIR/$CHANGES_FILE
+      - name: Update sources
         run: |
-          pushd "$DEST_FOLDER"
+          cp $SOURCE_DIR/_service $CHECKOUT_DIR
+          cp $SOURCE_DIR/${OBS_PACKAGE_NAME}.spec $CHECKOUT_DIR
+          pushd $CHECKOUT_DIR
+          rm -vf *.tar.gz
+          osc service manualrun
+          rm -vf *.tgz
+          popd
+          cp deps.tar.gz $CHECKOUT_DIR
+      - name: Commit to OBS
+        run: |
+          pushd $CHECKOUT_DIR
           osc ar
-          osc commit -m "GitHub Actions automated update to reference ${{ github.sha }} for ${{ matrix.obs_project_target }}"
+          osc commit -m "GitHub Actions automated update to reference ${{ github.sha }}"

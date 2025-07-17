@@ -11,7 +11,7 @@ on:
   workflow_dispatch:
 
 jobs:        
-  obs-release:
+  obs-rolling:
     name: Update OBS package
     uses: ./.github/workflows/obs-sync.yaml
     secrets: inherit
