@@ -1,4 +1,4 @@
-name: OBS release
+name: OBS sync
 
 on:
   workflow_call:
@@ -19,9 +19,6 @@ on:
         required: true
 
 concurrency: ${{ github.workflow }}-${{ inputs.obs_project }}
-
-
-
 
 jobs:
   obs-commit:

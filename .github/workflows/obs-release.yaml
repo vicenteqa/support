@@ -1,4 +1,4 @@
-name: CD to SUSE OBS Stable
+name: Release
 
 on:
   push:
@@ -82,9 +82,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  obs-release:
+  obs-sync-release:
     name: Update OBS package
-    uses: ./.github/workflows/obs-sync.yaml
+    uses: ./.github/workflows/obs.yaml
     needs:
       - release
     secrets: inherit
@@ -92,15 +92,16 @@ jobs:
       update_changelog: true
       obs_project: ${{ vars.OBS_PROJECT_STABLE }}
 
-  obs-rolling:
+  obs-sync-rolling:
     name: Update OBS package
-    uses: ./.github/workflows/obs-sync.yaml
+    uses: ./.github/workflows/obs.yaml
     needs:
       - release
     secrets: inherit
     with:
       update_changelog: false      
       obs_project: ${{ vars.OBS_PROJECT_ROLLING }}
+
   rollback-on-failure:
     name: Rollback release if OBS update fails
     runs-on: ubuntu-24.04
