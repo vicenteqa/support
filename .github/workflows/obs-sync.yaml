@@ -63,9 +63,17 @@ jobs:
   get-obs-projects:
     name: Determine OBS Projects to Build
     runs-on: ubuntu-latest
-    needs: 
+    needs:
       - get-stable-version
       - get-rolling-version
+    # This condition ensures the job runs even if 'get-stable-version' is skipped.
+    # It checks if either 'get-rolling-version' succeeded OR 'get-stable-version' was skipped.
+    if: |
+      always() && (
+        needs.get-rolling-version.result == 'success' ||
+        needs.get-stable-version.result == 'skipped' ||
+        needs.get-stable-version.result == 'success'
+      )
     outputs:
       stable_version: ${{ steps.set_versions.outputs.stable_version }}
       rolling_version: ${{ needs.get-rolling-version.outputs.version }}
