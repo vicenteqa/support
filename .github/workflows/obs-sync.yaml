@@ -65,16 +65,6 @@ jobs:
           REPOSITORY=${{ github.repository }}
           CHANGES_FILE=${OBS_PACKAGE_NAME}.changes
           /scripts/gh_release_to_obs_changeset.py $REPOSITORY -a $AUTHOR_EMAIL -t $VERSION -f $CHECKOUT_DIR/$CHANGES_FILE
-      - name: Update sources
-        run: |
-          cp $SOURCE_DIR/_service $CHECKOUT_DIR
-          cp $SOURCE_DIR/${OBS_PACKAGE_NAME}.spec $CHECKOUT_DIR
-          pushd $CHECKOUT_DIR
-          rm -vf *.tar.gz
-          osc service manualrun
-          rm -vf *.tgz
-          popd
-          cp deps.tar.gz $CHECKOUT_DIR
       - name: Commit to OBS
         run: |
           pushd $CHECKOUT_DIR
