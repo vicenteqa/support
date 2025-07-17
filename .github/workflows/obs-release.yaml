@@ -106,7 +106,7 @@ jobs:
     name: Rollback release if OBS update fails
     runs-on: ubuntu-24.04
     needs:
-      - obs-release
+      - obs-sync-release
       - release
     if: failure() && needs.obs-release.result == 'failure'
     steps:
