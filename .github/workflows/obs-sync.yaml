@@ -65,8 +65,8 @@ jobs:
           REPOSITORY=${{ github.repository }}
           CHANGES_FILE=${OBS_PACKAGE_NAME}.changes
           /scripts/gh_release_to_obs_changeset.py $REPOSITORY -a $AUTHOR_EMAIL -t $VERSION -f $CHECKOUT_DIR/$CHANGES_FILE
-      - name: Commit to OBS
+      - name: Commit on OBS
         run: |
-          pushd $CHECKOUT_DIR
+          pushd $DEST_FOLDER
           osc ar
           osc commit -m "GitHub Actions automated update to reference ${{ github.sha }}"
