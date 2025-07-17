@@ -103,6 +103,7 @@ jobs:
     name: Commit to OBS project ${{ matrix.obs_project_target }}
     runs-on: ubuntu-24.04
     needs: get-obs-projects
+    if: always()
     strategy:
       fail-fast: false
       matrix:
