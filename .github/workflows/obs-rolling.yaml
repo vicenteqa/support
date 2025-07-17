@@ -17,3 +17,4 @@ jobs:
     secrets: inherit
     with:
       update_changelog: false
+      obs_project: ${{ env.OBS_PROJECT_ROLLING }}
