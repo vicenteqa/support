@@ -26,13 +26,13 @@ jobs:
     runs-on: ubuntu-24.04
     container:
       image: ghcr.io/trento-project/continuous-delivery:main
-      env:
-        OBS_PROJECT: ${{ inputs.obs_project }}
-        AUTHOR_EMAIL: trento-developers@suse.com
-        DEST_FOLDER: "/tmp/osc_project"
-        FOLDER: packaging/suse
-        PACKAGE: supportutils-plugin-trento
       options: -u 0:0
+    env:
+       OBS_PROJECT: ${{ inputs.obs_project }}
+       AUTHOR_EMAIL: trento-developers@suse.com
+       DEST_FOLDER: "/tmp/osc_project"
+       FOLDER: packaging/suse
+       PACKAGE: supportutils-plugin-trento
     outputs:
       version: ${{ steps.get_version_details.outputs.version }}
     steps:
