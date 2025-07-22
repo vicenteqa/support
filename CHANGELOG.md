@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.0.5 - 2025-07-22
+
+### What's Changed
+
+* No changes
+
+**Full Changelog**: https://github.com/vicenteqa/support/compare/1.0.4...1.0.5
+
 ## 1.0.4 - 2025-07-22
 
 ### What's Changed
