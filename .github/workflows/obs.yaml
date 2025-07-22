@@ -22,7 +22,7 @@ concurrency: ${{ github.workflow }}-${{ inputs.obs_project }}
 
 jobs:
   obs-commit:
-    name: Commit to OBS project ${{ matrix.obs_project_target }}
+    name: Commit to OBS project
     runs-on: ubuntu-24.04
     container:
       image: ghcr.io/trento-project/continuous-delivery:main
@@ -36,7 +36,7 @@ jobs:
     outputs:
       version: ${{ steps.get_version_details.outputs.version }}
     steps:
-      - run: echo ${{ env.OBS_PROJECT }}
+      - run: echo ${{ inputs.OBS_PROJECT }}
       - name: Checkout
         uses: actions/checkout@v4
         with:
