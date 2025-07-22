@@ -71,7 +71,7 @@ jobs:
           pushd $DEST_FOLDER
           osc service manualrun
       - name: Prepare .changes file
-        if: inputs.update_changelog == 'true'
+        if: inputs.update_changelog == true
         run: |
           CHANGES_FILE=${PACKAGE}.changes
           TAG=${{ steps.latest-tag.outputs.tag }}
