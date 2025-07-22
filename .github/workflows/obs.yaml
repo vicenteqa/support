@@ -36,7 +36,6 @@ jobs:
     outputs:
       version: ${{ steps.get_version_details.outputs.version }}
     steps:
-      - run: echo ${{ inputs.OBS_PROJECT }}
       - name: Checkout
         uses: actions/checkout@v4
         with:
