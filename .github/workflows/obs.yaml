@@ -80,18 +80,4 @@ jobs:
           pushd $DEST_FOLDER
           osc ar
           osc commit -m "GitHub Actions automated update to reference ${{ github.sha }}"
-
-  rollback-on-failure:
-    name: Rollback release if OBS update fails
-    runs-on: ubuntu-24.04
-    needs:
-      - obs-commit
-    if: always() && needs.obs-commit.result == 'failure' && inputs.update_changelog == true    
-    steps:
-      - name: Delete GitHub Tag and Release
-        uses: ClementTsang/delete-tag-and-release@v0.4.0
-        with:
-          tag_name: ${{ needs.obs-commit.outputs.version }}
-          delete_release: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}          
+         
