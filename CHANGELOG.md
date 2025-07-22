@@ -1,5 +1,25 @@
 # Changelog
 
+## 1.0.1 - 2025-07-22
+
+### What's Changed
+
+* remove dummy file (#5) @vicenteqa
+* remove debug job (#2) @vicenteqa
+
+#### Bug Fixes
+
+* Remove dummy file (#9) @vicenteqa
+* new release (#7) @vicenteqa
+* Add dummy file (#4) @vicenteqa
+* Dummy test (#3) @vicenteqa
+
+#### Maintenance
+
+* add dummy file to check changelog (#8) @vicenteqa
+
+**Full Changelog**: https://github.com/vicenteqa/support/compare/...1.0.1
+
 ## 2.10.0 - 2025-07-22
 
 ### What's Changed
