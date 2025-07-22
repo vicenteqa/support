@@ -36,6 +36,7 @@ jobs:
     outputs:
       version: ${{ steps.get_version_details.outputs.version }}
     steps:
+      - run: echo ${{ inputs.update_changelog }}
       - name: Checkout
         uses: actions/checkout@v4
         with:
