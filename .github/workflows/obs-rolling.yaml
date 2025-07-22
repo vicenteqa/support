@@ -7,8 +7,8 @@ on:
     branches:
       - "main"
     paths:
-      - "!**"
-      - "VERSION" 
+      - "**"
+      - "!VERSION" 
   workflow_dispatch:
 
 jobs:
