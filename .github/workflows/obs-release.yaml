@@ -55,11 +55,13 @@ jobs:
           release-notes: ${{ steps.draft-release.outputs.body }}
 
       - name: Commit new changelog
-        uses: stefanzweifel/git-auto-commit-action@v6
+        uses: stefanzweifel/git-auto-commit-action@v6.0.1
         with:
           branch: main
           commit_message: "Automatically update CHANGELOG.md for release ${{ steps.detect-version.outputs.current-version }}"        
-
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                
   release:
     name: Tag and publish release
     permissions:
