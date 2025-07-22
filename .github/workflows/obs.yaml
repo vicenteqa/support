@@ -36,6 +36,7 @@ jobs:
     outputs:
       version: ${{ steps.get_version_details.outputs.version }}
     steps:
+      - run: echo ${{ env.OBS_PROJECT }}
       - name: Checkout
         uses: actions/checkout@v4
         with:
@@ -74,7 +75,7 @@ jobs:
         run: |
           CHANGES_FILE=${PACKAGE}.changes
           TAG=${{ steps.get_version_details.outputs.version }}
-          /scripts/gh_release_to_obs_changeset.py ${{ github.repository }} -a trento-developers@suse.com -t $TAG -f $DEST_FOLDER/$CHANGES_FILE
+          /scripts/gh_release_to_obs_changeset.py ${{ github.repository }} -a ${{ env.AUTHOR_EMAIL }} -t $TAG -f $DEST_FOLDER/$CHANGES_FILE
       - name: Commit on OBS
         run: |
           pushd $DEST_FOLDER
