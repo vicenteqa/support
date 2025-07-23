@@ -1,5 +1,5 @@
 name: CD to SUSE OBS Rolling
-concurrency: cd-obs-${{ github.ref }}
+
 on:
   push:
     tags-ignore:
@@ -9,6 +9,8 @@ on:
     paths-ignore:
       - "VERSION" 
   workflow_dispatch:
+
+concurrency: ${{ github.workflow }}
 
 jobs:
   check-version-modified:
